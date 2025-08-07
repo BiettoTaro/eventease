@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+psycopg2-binary
+sqlalchemy
+python-dotenv
+setuptools>=78.1.1
