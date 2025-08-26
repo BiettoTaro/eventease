@@ -10,6 +10,4 @@ app.include_router(registrations.router, prefix="/registrations", tags=["Registr
 app.include_router(news.router, prefix="/news", tags=["News"])
 app.include_router(health.router, prefix="/health", tags=["Health"])
 
-# @app.get("/events")
-# def get_events():
-#     return [{"title": "hackaton"}, {"title": "Workshop"}]
+
