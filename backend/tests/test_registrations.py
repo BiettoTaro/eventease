@@ -1,0 +1,1 @@
+#TODO test register, unregister, list registrations
