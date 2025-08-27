@@ -16,7 +16,13 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     # Hash the password
     hashed_password = pwd_context.hash(user.password)
     # Create a new user
-    db_user = User(email=user.email, name=user.name, password_hash=hashed_password)
+    db_user = User(
+        email=user.email,
+        name=user.name,
+        password_hash=hashed_password,
+        latitude=user.latitude,
+        longitude=user.longitude
+    )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
@@ -42,6 +48,8 @@ def update_user(user_id: int, user: UserCreate, db: Session = Depends(get_db)):
     db_user.email = user.email
     db_user.name = user.name
     db_user.password_hash = pwd_context.hash(user.password)
+    db_user.latitude = user.latitude
+    db_user.longitude = user.longitude
     db.commit()
     db.refresh(db_user)
     return db_user
