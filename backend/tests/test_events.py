@@ -1,0 +1,1 @@
+#TODO test events CRUD, listing, distance validation, filtering, capacity validation
