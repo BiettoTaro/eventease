@@ -1,12 +1,17 @@
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr, validator, Field
+from typing import Optional
 import string
 
 class UserBase(BaseModel):
-    email: EmailStr
-    name: str
+    email: EmailStr = Field(..., example="test@example.com")
+    name: str = Field(..., example="Test Icolo")
+    latitude: Optional[float] = Field(None, example=51.5074)
+    longitude: Optional[float] = Field(None, example=-0.1278)
+    city: Optional[str] = Field(None, example="London")
+    country: Optional[str] = Field(None, example="UK")
 
 class UserCreate(UserBase):
-    password: str
+    password: str = Field(..., example="Test123!")
 
     @validator("password")
     def password_strength(cls, v):
@@ -21,9 +26,11 @@ class UserCreate(UserBase):
         if not any(c in string.punctuation for c in v):
             raise ValueError("Password must contain at least one special character")
         return v
+    
 
 class UserOut(UserBase):
     id: int
+    is_admin: bool
 
     class Config:
         orm_mode = True

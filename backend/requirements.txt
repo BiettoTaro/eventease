@@ -6,8 +6,9 @@ python-dotenv
 setuptools>=78.1.1
 pydantic[email]
 passlib
-bcrypt
+bcrypt>=4.0.1
 jose
 python-jose[cryptography]
 datetime
 pytz
+
