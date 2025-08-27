@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.utils.security import get_current_user
 from app.models.user import User
+from app.services.news_provider import fetch_techcrunch_news
 
 router = APIRouter()
 
@@ -75,3 +76,15 @@ def delete_news(news_id: int, db: Session = Depends(get_db),
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to delete news: { str(e)}")
+
+
+@router.post("/refresh")
+def refresh_news(db: Session = Depends(get_db),
+                 current_user=Depends(get_current_user)):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Not authorized to refresh news")
+    try:
+        added = fetch_techcrunch_news()
+        return {"message": f"Refreshed news, added {added} new items"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to refresh news: { str(e)}")

@@ -7,8 +7,11 @@ setuptools>=78.1.1
 pydantic[email]
 passlib
 bcrypt>=4.0.1
+feedparser
 jose
 python-jose[cryptography]
 datetime
 pytz
+requests
+apscheduler
 
