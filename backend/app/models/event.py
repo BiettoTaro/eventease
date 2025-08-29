@@ -15,8 +15,10 @@ class Event(Base):
     capacity = Column(Integer, nullable=True)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
+    source = Column(String, nullable=True)
+    url = Column(String, nullable=True)
     start_time = Column(DateTime, nullable=False)
-    end_time = Column(DateTime, nullable=False)
+    end_time = Column(DateTime, nullable=True)
     
     
     

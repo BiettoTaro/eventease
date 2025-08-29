@@ -7,38 +7,81 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+TOPIC_KEYWORDS = {
+    "AI": ["AI", "artificial intelligence", "machine learning", "neural network"],
+    "Cloud": ["cloud", "AWS", "Azure", "GCP"],
+    "Security": ["cybersecurity", "hacker", "breach", "malware", "ransomware"],
+    "Hardware": ["chip", "processor", "CPU", "GPU", "semiconductor"],
+    "Startups": ["startup", "funding", "seed", "venture", "Series A"],
+}
 
-def save_news_item(title, summary, url, image_url, topic, published_at):
+def classify_topic(text: str) -> str:
+    text_lower = text.lower()
+    for topic, keywords in TOPIC_KEYWORDS.items():
+        for keyword in keywords:
+            if keyword.lower() in text_lower:
+                return topic
+    return "General"
+
+def save_news_item(news: News):
     db = SessionLocal()
-    existing = db.query(News).filter(News.url == url).first()
+    existing = db.query(News).filter(News.url == news.url).first()
     if existing:
         db.close()
         return False
-    news_item = News(
-        title=title,
-        summary=summary,
-        url=url,
-        image_url=image_url,
-        topic=topic,
-        published_at=published_at
-    )
-    db.add(news_item)
-    db.commit()
-    db.close()
+    try:
+        db.add(news)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Failed to save news: {e}")
+        return False
+    finally:
+        db.close()
     return True
+    
+       
 
-def fetch_techcrunch_news():
+def fetch_techcrunch_news(limit: int = 20):
     url = "https://techcrunch.com/feed/"
     feed = feedparser.parse(url)
     added = 0
 
-    for entry in feed.entries:
-        # Skip if already in db
-        published = datetime(*entry.published_parsed[:6]) if hasattr(entry, "published_parsed") else datetime.utcnow()
-        if save_news_item(entry.title, entry.summary, entry.link, entry.get("media_content", [{}])[0].get("url")
-             if hasattr(entry, "media_content") else None, "Tech", published):
+    for entry in feed.entries[:limit]:
+        # publication date
+        published = (
+            datetime(*entry.published_parsed[:6])
+            if hasattr(entry, "published_parsed")
+            else datetime.utcnow()
+        )
+
+        # image if available
+        image_url = None
+        if hasattr(entry, "media_content") and entry.media_content:
+            image_url = entry.media_content[0].get("url")
+
+        # log fetched article
+        logger.info(f"TC story: {entry.title} ({entry.link})")
+
+        saved = save_news_item(
+            News(
+            title=entry.title,
+            summary=getattr(entry, "summary", None),
+            url=entry.link,
+            image_url=image_url,
+            source="TechCrunch",    
+            topic=classify_topic(entry.title),           
+            published_at=published
+        )
+    )
+
+        if saved:
             added += 1
+        else:
+            logger.info(f"Skipped duplicate: {entry.link}")
+
     return added
+
 
 def fetch_hackernews_news(limit: int = 10):
     base = "https://hacker-news.firebaseio.com/v0"
@@ -54,13 +97,16 @@ def fetch_hackernews_news(limit: int = 10):
             published = datetime.utcfromtimestamp(story["time"])
             logger.info(f"HN story: {story['title']} ({url})")   
             saved = save_news_item(
+                News(
                 title=story["title"],
                 summary=None,
                 url=url,
                 image_url=None,
-                topic="HN",        
+                source="HN",        
+                topic=classify_topic(story["title"]),        
                 published_at=published
             )
+        )
             if saved:
                 added += 1
             else:

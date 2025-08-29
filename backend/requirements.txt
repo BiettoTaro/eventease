@@ -16,4 +16,5 @@ requests
 apscheduler
 pytest
 pytest-cov
+alembic
 

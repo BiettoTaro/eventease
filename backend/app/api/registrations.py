@@ -50,11 +50,12 @@ def register(event_id: int, db: Session = Depends(get_db),
         logger.error(f"Failed to register for event: { str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to register for event: { str(e)}")
             
-@router.get("/me", response_model=list[RegistrationOut])
-def get_my_registrations(db: Session = Depends(get_db),
+@router.get("/event/{event_id}", response_model=list[RegistrationOut])
+def get_my_registrations(event_id: int, db: Session = Depends(get_db),
                         current_user: User = Depends(get_current_user)):
-    registrations = db.query(Registration).filter(Registration.user_id == current_user.id).all()
-    return registrations
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    return db.query(Registration).filter(Registration.event_id == event_id).all()
 
 @router.delete("/{event_id}")
 def unregister(event_id: int, db: Session = Depends(get_db),

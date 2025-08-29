@@ -33,8 +33,14 @@ def create_news(news: NewsCreate, db: Session = Depends(get_db),
         raise HTTPException(status_code=500, detail=f"Failed to create news: { str(e)}")
 
 @router.get("/", response_model=list[NewsOut])
-def list_news(topic: str = None, db: Session = Depends(get_db)):
+def list_news(
+    source: str = None,
+    topic: str = None,
+    db: Session = Depends(get_db)
+    ):
     query = db.query(News)
+    if source:
+        query = query.filter(News.source == source)
     if topic:
         query = query.filter(News.topic == topic)
     return query.all()

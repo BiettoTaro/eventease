@@ -11,6 +11,8 @@ class EventBase(BaseModel):
     country: Optional[str] = Field(None, example="UK")
     latitude: Optional[float] = Field(None, example=52.2053)
     longitude: Optional[float] = Field(None, example=0.1218)
+    source: Optional[str] = Field(None, example="Ticketmaster")
+    url: Optional[str] = Field(None, example="https://ticketmaster.com/event/123")
     start_time: datetime.datetime = Field(..., example="2025-09-10T10:00:00Z")
     end_time: datetime.datetime = Field(..., example="2025-09-10T18:00:00Z")
 

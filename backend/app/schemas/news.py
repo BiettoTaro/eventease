@@ -8,6 +8,7 @@ class NewsBase(BaseModel):
     summary: Optional[str] = Field(None, example="News Summary")
     url: str = Field(..., example="https://example.com/news")
     image_url: Optional[HttpUrl] = Field(None, example="https://example.com/image.jpg")
+    source: str = Field(..., example="News Source")
     topic: Optional[str] = Field(None, example="News Topic")
     published_at: Optional[datetime.datetime] = Field(None, example="2025-08-27T12:58:51Z")
 
