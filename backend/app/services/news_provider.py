@@ -23,25 +23,24 @@ def classify_topic(text: str) -> str:
                 return topic
     return "General"
 
-def save_news_item(title, summary, url, image_url, source, topic, published_at):
+def save_news_item(news: News):
     db = SessionLocal()
-    existing = db.query(News).filter(News.url == url).first()
+    existing = db.query(News).filter(News.url == news.url).first()
     if existing:
         db.close()
         return False
-    news_item = News(
-        title=title,
-        summary=summary,
-        url=url,
-        image_url=image_url,
-        source=source,
-        topic=topic,
-        published_at=published_at
-    )
-    db.add(news_item)
-    db.commit()
-    db.close()
+    try:
+        db.add(news)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Failed to save news: {e}")
+        return False
+    finally:
+        db.close()
     return True
+    
+       
 
 def fetch_techcrunch_news(limit: int = 20):
     url = "https://techcrunch.com/feed/"
@@ -65,6 +64,7 @@ def fetch_techcrunch_news(limit: int = 20):
         logger.info(f"TC story: {entry.title} ({entry.link})")
 
         saved = save_news_item(
+            News(
             title=entry.title,
             summary=getattr(entry, "summary", None),
             url=entry.link,
@@ -73,6 +73,7 @@ def fetch_techcrunch_news(limit: int = 20):
             topic=classify_topic(entry.title),           
             published_at=published
         )
+    )
 
         if saved:
             added += 1
@@ -96,6 +97,7 @@ def fetch_hackernews_news(limit: int = 10):
             published = datetime.utcfromtimestamp(story["time"])
             logger.info(f"HN story: {story['title']} ({url})")   
             saved = save_news_item(
+                News(
                 title=story["title"],
                 summary=None,
                 url=url,
@@ -104,6 +106,7 @@ def fetch_hackernews_news(limit: int = 10):
                 topic=classify_topic(story["title"]),        
                 published_at=published
             )
+        )
             if saved:
                 added += 1
             else:
