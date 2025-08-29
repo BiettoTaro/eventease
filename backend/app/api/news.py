@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.utils.security import get_current_user
 from app.models.user import User
-from app.services.news_provider import fetch_techcrunch_news
+from app.services.news_provider import fetch_techcrunch_news, fetch_hackernews_news
 
 router = APIRouter()
 
@@ -84,7 +84,8 @@ def refresh_news(db: Session = Depends(get_db),
     if not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Not authorized to refresh news")
     try:
-        added = fetch_techcrunch_news()
-        return {"message": f"Refreshed news, added {added} new items"}
+        added_tc = fetch_techcrunch_news()
+        added_hn = fetch_hackernews_news()
+        return {"status": "ok", "techcrunch": added_tc, "hackernews": added_hn}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to refresh news: { str(e)}")
