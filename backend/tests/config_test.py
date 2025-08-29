@@ -24,5 +24,15 @@ app.dependency_overrides[get_db] = override_get_db
 @pytest.fixture
 def test_client():
     return TestClient(app)
+
+@pytest.fixture
+def db():
+    """Database session fixture for testing"""
+    Base.metadata.create_all(bind=engine)
+    db = TestingSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
         
 

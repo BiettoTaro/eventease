@@ -9,6 +9,7 @@ class EventBase(BaseModel):
     address: Optional[str] = Field(None, example="Tech Park, Cambridge")
     city: Optional[str] = Field(None, example="Cambridge")
     country: Optional[str] = Field(None, example="UK")
+    capacity: Optional[int] = Field(None, example=100)
     latitude: Optional[float] = Field(None, example=52.2053)
     longitude: Optional[float] = Field(None, example=0.1218)
     start_time: datetime.datetime = Field(..., example="2025-09-10T10:00:00Z")
