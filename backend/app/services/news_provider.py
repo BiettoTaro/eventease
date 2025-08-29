@@ -52,7 +52,7 @@ def fetch_hackernews_news(limit: int = 10):
             # Use provided URL or fallback to HN discussion link
             url = story.get("url") or f"{fallback_url}{story_id}"
             published = datetime.utcfromtimestamp(story["time"])
-            logger.info(f"📰 HN story: {story['title']} ({url})")   # 👈 log
+            logger.info(f"HN story: {story['title']} ({url})")   
             saved = save_news_item(
                 title=story["title"],
                 summary=None,
