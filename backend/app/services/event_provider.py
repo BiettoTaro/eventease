@@ -10,7 +10,9 @@ TICKETMASTER_API_KEY = os.getenv("TICKETMASTER_API_KEY")
 
 def save_event_item(event: Event):
     db = SessionLocal()
-    existing = db.query(Event).filter(Event.url == event.url).first()
+    existing = db.query(Event).filter(
+        Event.title == event.title,
+        Event.url == event.url).first()
     if existing:
         db.close()
         return False

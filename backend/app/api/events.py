@@ -1,9 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.db.database import get_db
 from app.schemas.event import EventCreate, EventOut
+from app.schemas.pagination import PaginatedResponse
 from app.models.event import Event
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from app.utils.security import get_current_user
 from app.models.user import User
 from datetime import datetime
@@ -13,6 +14,18 @@ import math
 
 
 router = APIRouter()
+
+# Helper function to format events response
+def format_events(events, limit, offset) -> Dict[str, Any]:
+    return {
+        "total": len(events),
+        "limit": limit,
+        "offset": offset,
+        "events": [
+            {**jsonable_encoder(e), "booking_url": e.url}
+            for e in events[offset:offset + limit]
+        ]
+    }
 
 
 # Create an event (admin only)
@@ -29,55 +42,52 @@ def create_event(event: EventCreate, db: Session = Depends(get_db),
 
 
 # List events (with fallbacks)
-@router.get("/", response_model=list[EventOut])
+@router.get("/", response_model=PaginatedResponse[EventOut])
 def list_events(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-    radius: Optional[int] = 50
+    radius: Optional[int] = 50,
+    limit: int = 10, 
+    offset: int = 0
 ):
-    events = db.query(Event).all()
+    query = db.query(Event)
+    total = 0
 
-    # Nearby events first (if user has coords)
+    # Nearby events first (if user has coordinates)
     if current_user.latitude and current_user.longitude:
+        events = query.all()
         nearby = [
             e for e in events if e.latitude and e.longitude and
             haversine(current_user.latitude, current_user.longitude, e.latitude, e.longitude) <= radius
         ]
+        total = len(nearby)
         if nearby:
-            return [
-                {**jsonable_encoder(e), "booking_url": e.url}
-                for e in nearby
-            ]
+            return format_events(nearby, limit, offset)
 
     # Fallback to same city
     if current_user.city:
-        city_events = db.query(Event).filter(Event.location_city == current_user.city).all()
+        city_events = query.filter(Event.city == current_user.city).all()
+        total = len(city_events)
         if city_events:
-            return [
-                {**jsonable_encoder(e), "booking_url": e.url}
-                for e in city_events
-            ]
+            return format_events(city_events, limit, offset)
 
     # Fallback to same country
     if current_user.country:
-        country_events = db.query(Event).filter(Event.location_country == current_user.country).all()
+        country_events = query.filter(Event.country == current_user.country).all()
+        total = len(country_events)
         if country_events:
-            return [
-                {**jsonable_encoder(e), "booking_url": e.url}
-                for e in country_events
-            ]
+            return format_events(country_events, limit, offset)
 
-    # Final fallback → latest events
-    latest = db.query(Event).order_by(Event.start_time.desc()).all()
-    return [
-        {**jsonable_encoder(e), "booking_url": e.url}
-        for e in latest
-    ]
+    # Final fallback latest events
+    latest = query.order_by(Event.start_time.desc()).all()
+    total = len(latest)
+    return format_events(latest, limit, offset)
+
 
 # Get event by ID
 @router.get("/{event_id}", response_model=EventOut)
 def get_event(event_id: int, db: Session = Depends(get_db)):
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = db.get(Event, event_id)
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
     return event
@@ -89,7 +99,7 @@ def update_event(event_id: int, event: EventCreate, db: Session = Depends(get_db
     if not getattr(current_user, "is_admin", False):
         raise HTTPException(status_code=403, detail="Not authorized to update events")
     try:
-        db_event = db.query(Event).filter(Event.id == event_id).first()
+        db_event = db.get(Event, event_id)
         if not db_event:
             raise HTTPException(status_code=404, detail="Event not found")
         for field, value in event.dict().items():
@@ -108,7 +118,7 @@ def delete_event(event_id: int, db: Session = Depends(get_db),
     if not getattr(current_user, "is_admin", False):
         raise HTTPException(status_code=403, detail="Not authorized to delete events")
     try:
-        db_event = db.query(Event).filter(Event.id == event_id).first()
+        db_event = db.get(Event, event_id)
         if not db_event:
             raise HTTPException(status_code=404, detail="Event not found")
         db.delete(db_event)

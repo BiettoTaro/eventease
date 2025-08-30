@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 import datetime
+from typing import List
 
 
 class EventBase(BaseModel):
@@ -24,3 +25,4 @@ class EventOut(EventBase):
     
     class Config:
         orm_mode = True
+

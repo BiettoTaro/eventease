@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.db.database import get_db
 from app.schemas.registration import RegistrationOut
+from app.schemas.pagination import PaginatedResponse
 from app.models.registration import Registration
 from sqlalchemy.orm import Session
-from typing import List, Optional
 from app.utils.security import get_current_user
 from app.models.user import User
 from app.models.event import Event
@@ -50,12 +50,20 @@ def register(event_id: int, db: Session = Depends(get_db),
         logger.error(f"Failed to register for event: { str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to register for event: { str(e)}")
             
-@router.get("/event/{event_id}", response_model=list[RegistrationOut])
+@router.get("/event/{event_id}", response_model=PaginatedResponse[RegistrationOut])
 def get_my_registrations(event_id: int, db: Session = Depends(get_db),
-                        current_user: User = Depends(get_current_user)):
+                        current_user: User = Depends(get_current_user),
+                        limit: int = 10,
+                        offset: int = 0):
     if not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Not authorized")
-    return db.query(Registration).filter(Registration.event_id == event_id).all()
+    query = db.query(Registration).filter(Registration.event_id == event_id)
+    return PaginatedResponse(
+        total=query.count(),
+        limit=limit,
+        offset=offset,
+        items=query.offset(offset).limit(limit).all()
+    )
 
 @router.delete("/{event_id}")
 def unregister(event_id: int, db: Session = Depends(get_db),
