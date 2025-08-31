@@ -10,5 +10,6 @@ class News(Base):
     summary = Column(Text, nullable=True)
     url = Column(String, nullable=False) # Original source
     image_url = Column(String, nullable=True) # Image URL
+    source = Column(String, nullable=True) # e.g TechCrunch, HackerNews    
     topic = Column(String, nullable=True) # e.g AI, Cloud, Security    
     published_at = Column(DateTime, default=datetime.datetime.now(datetime.timezone.utc)) # Published date

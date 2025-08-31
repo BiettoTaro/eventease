@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.schemas.user import UserCreate, UserOut
+from app.schemas.pagination import PaginatedResponse    
 from app.models.user import User
 from passlib.context import CryptContext
 
@@ -41,9 +42,17 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Failed to create user: {str(e)}")
 
 # List all users
-@router.get("/", response_model=list[UserOut])
-def list_users(db: Session = Depends(get_db)):
-    return db.query(User).all()
+@router.get("/", response_model=PaginatedResponse[UserOut])
+def list_users(db: Session = Depends(get_db),
+               limit: int = 10,
+               offset: int = 0):
+    query = db.query(User)
+    return PaginatedResponse(
+        total=query.count(),
+        limit=limit,
+        offset=offset,
+        items=query.offset(offset).limit(limit).all()
+    )
 
 # Get a user by id
 @router.get("/{user_id}", response_model=UserOut)

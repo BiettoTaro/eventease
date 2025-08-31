@@ -1,4 +1,3 @@
-import pytest
 from datetime import datetime, timedelta, timezone
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -25,7 +24,7 @@ class TestEvents:
         db.commit()
         
         # Create access token
-        token = create_access_token({"sub": str(admin_user.id)})
+        token = create_access_token({"sub": admin_user.email})
         
         # Event data
         event_data = {
@@ -67,7 +66,7 @@ class TestEvents:
         db.commit()
         
         # Create access token
-        token = create_access_token({"sub": str(regular_user.id)})
+        token = create_access_token({"sub": regular_user.email})
         
         event_data = {
             "title": "Test Event",
@@ -301,7 +300,7 @@ class TestEvents:
         db.commit()
         
         # Create access token
-        token = create_access_token({"sub": str(admin_user.id)})
+        token = create_access_token({"sub": admin_user.email})
         
         # Update data
         update_data = {
@@ -335,7 +334,7 @@ class TestEvents:
         db.commit()
         
         # Create access token
-        token = create_access_token({"sub": str(admin_user.id)})
+        token = create_access_token({"sub": admin_user.email})
         
         update_data = {
             "title": "Updated Title",
@@ -376,7 +375,7 @@ class TestEvents:
         db.commit()
         
         # Create access token
-        token = create_access_token({"sub": str(regular_user.id)})
+        token = create_access_token({"sub": regular_user.email})
         
         update_data = {
             "title": "Updated Title",
@@ -417,7 +416,7 @@ class TestEvents:
         db.commit()
         
         # Create access token
-        token = create_access_token({"sub": str(admin_user.id)})
+        token = create_access_token({"sub": admin_user.email})
         
         response = test_client.delete(
             f"/events/{event.id}",
@@ -444,7 +443,7 @@ class TestEvents:
         db.commit()
         
         # Create access token
-        token = create_access_token({"sub": str(admin_user.id)})
+        token = create_access_token({"sub": admin_user.email})
         
         response = test_client.delete(
             "/events/999",
@@ -477,7 +476,7 @@ class TestEvents:
         db.commit()
         
         # Create access token
-        token = create_access_token({"sub": str(regular_user.id)})
+        token = create_access_token({"sub": regular_user.email})
         
         response = test_client.delete(
             f"/events/{event.id}",
@@ -562,7 +561,7 @@ class TestEvents:
         db.commit()
         
         # Create access token
-        token = create_access_token({"sub": str(admin_user.id)})
+        token = create_access_token({"sub": admin_user.email})
         
         # Test event with capacity
         event_with_capacity = {

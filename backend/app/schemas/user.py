@@ -1,19 +1,19 @@
-from pydantic import BaseModel, EmailStr, validator, Field
+from pydantic import BaseModel, EmailStr, field_validator, Field, ConfigDict
 from typing import Optional
 import string
 
 class UserBase(BaseModel):
-    email: EmailStr = Field(..., example="test@example.com")
-    name: str = Field(..., example="Test Icolo")
-    latitude: Optional[float] = Field(None, example=51.5074)
-    longitude: Optional[float] = Field(None, example=-0.1278)
-    city: Optional[str] = Field(None, example="London")
-    country: Optional[str] = Field(None, example="UK")
+    email: EmailStr = Field(..., json_schema_extra={'example': "test@example.com"})
+    name: str = Field(..., json_schema_extra={'example': "Test Icolo"})
+    latitude: Optional[float] = Field(None, json_schema_extra={'example': 51.5074})
+    longitude: Optional[float] = Field(None, json_schema_extra={'example': -0.1278})
+    city: Optional[str] = Field(None, json_schema_extra={'example': "London"})
+    country: Optional[str] = Field(None, json_schema_extra={'example': "UK"})
 
 class UserCreate(UserBase):
-    password: str = Field(..., example="Test123!")
+    password: str = Field(..., json_schema_extra={'example': "Test123!"})
 
-    @validator("password")
+    @field_validator("password")
     def password_strength(cls, v):
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters long")
@@ -32,6 +32,5 @@ class UserOut(UserBase):
     id: int
     is_admin: bool
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
         

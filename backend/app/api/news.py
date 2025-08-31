@@ -1,11 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.db.database import get_db
 from app.schemas.news import NewsCreate, NewsOut
+from app.schemas.pagination import PaginatedResponse
 from app.models.news import News
 from sqlalchemy.orm import Session
-from typing import List
 from app.utils.security import get_current_user
-from app.models.user import User
 from app.services.news_provider import fetch_techcrunch_news, fetch_hackernews_news
 
 router = APIRouter()
@@ -32,12 +31,25 @@ def create_news(news: NewsCreate, db: Session = Depends(get_db),
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to create news: { str(e)}")
 
-@router.get("/", response_model=list[NewsOut])
-def list_news(topic: str = None, db: Session = Depends(get_db)):
+@router.get("/", response_model=PaginatedResponse[NewsOut])
+def list_news(
+    source: str = None,
+    topic: str = None,
+    db: Session = Depends(get_db),
+    limit: int = 10,
+    offset: int = 0,
+    ):
     query = db.query(News)
+    if source:
+        query = query.filter(News.source == source)
     if topic:
         query = query.filter(News.topic == topic)
-    return query.all()
+    return PaginatedResponse(
+        total=query.count(),
+        limit=limit,
+        offset=offset,
+        items=query.offset(offset).limit(limit).all()
+    )
 
 @router.put("/{news_id}", response_model=NewsOut)
 def update_news(news_id: int, news: NewsCreate, db: Session = Depends(get_db),

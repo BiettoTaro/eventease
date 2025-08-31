@@ -1,4 +1,4 @@
-import pytest
+import pytest 
 from datetime import datetime, timedelta, timezone
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -203,7 +203,7 @@ class TestUsers:
         user_data = {
             "email": "getbyid1@example.com",
             "name": "Get By ID User",
-            "password": "Get123!"
+            "password": "Get123!@"
         }
         
         create_response = test_client.post("/users/", json=user_data)
@@ -333,7 +333,7 @@ class TestUsers:
         user_data = {
             "email": "geo1@example.com",
             "name": "Geo User",
-            "password": "Geo123!",
+            "password": "Geo123!@",
             "latitude": 40.7128,
             "longitude": -74.0060,
             "city": "New York",
