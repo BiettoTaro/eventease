@@ -10,11 +10,11 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Copy dependencies first (cache layer)
+# Copy dependencies first
 COPY package*.json ./
 
-# Rebuild lightningcss manually after installing all packages
-RUN npm install && npm rebuild lightningcss --build-from-source || true
+# Install all dependencies (including devDependencies)
+RUN npm install --include=dev
 
 # Copy the rest of the app
 COPY . .
