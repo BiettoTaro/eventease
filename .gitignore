@@ -209,7 +209,10 @@ __marimo__/
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules/
+frontend/node_modules/
+backend/venv/
+backend/__pycache__/
 /.pnp
 .pnp.*
 .yarn/*
@@ -223,10 +226,11 @@ __marimo__/
 
 # next.js
 /.next/
-/out/
+frontend/.next/
+frontend/out/
 
 # production
-/build
+backend/build/
 
 # misc
 .DS_Store
@@ -258,4 +262,14 @@ Dockerfile.*
 
 # Ignore build artifacts and containers (if accidentally generated locally)
 **/.container-volumes/
+
+# alembic migration cache
+backend/migrations/versions/*.pyc
+
+# vscode workspace
+.vscode/
+
+# local docker volumes
+**/.container-volumes/
+
 
