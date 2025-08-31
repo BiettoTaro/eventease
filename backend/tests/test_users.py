@@ -1,8 +1,8 @@
 import pytest 
 from datetime import datetime, timedelta, timezone
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
-from app.models.user import User
+from sqlalchemy.orm import Session # type: ignore
+from app.models.user import User # type: ignore
 from app.utils.security import get_password_hash, create_access_token
 from app.schemas.user import UserCreate
 

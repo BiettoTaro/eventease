@@ -220,7 +220,9 @@ def test_register_for_nonexistent_event(test_client: TestClient, db: Session, no
     
     # Verify proper error handling
     assert response.status_code == 404, "Should return 404 for non-existent event"
-    assert "Event not found" in response.json()["detail"], "Error message should indicate event not found"
+    assert "Event not found" in response.json()["detail"], (
+        "Error message should indicate event not found"
+    )
 
 
 def test_register_for_event_already_registered(test_client: TestClient, db: Session, normal_user: User, test_event: Event):
@@ -300,7 +302,12 @@ def test_register_for_full_event(test_client: TestClient, db: Session, normal_us
 # Event Unregistration Tests
 # =============================================================================
 
-def test_unregister_from_event_success(test_client: TestClient, db: Session, normal_user: User, test_event: Event):
+def test_unregister_from_event_success(
+    test_client: TestClient, 
+    db: Session, 
+    normal_user: User, 
+    test_event: Event
+):
     """
     Test successful unregistration from an event.
     
