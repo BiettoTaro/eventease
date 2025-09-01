@@ -3,6 +3,7 @@ import HeaderItem from './HeaderItem'
 import {AiFillHome} from 'react-icons/ai'
 import { BsFillInfoCircleFill } from 'react-icons/bs'
 import Link from 'next/link'
+import DarkModeToggle from './DarkModeToggle'
 
 export default function Header() {
   return (
@@ -12,9 +13,12 @@ export default function Header() {
             <HeaderItem title="About" address="/about" Icon={BsFillInfoCircleFill} />
 
         </div>
-        <Link href="/">
-            <span className="text-2xl font-bold bg-orange-500 py-1 px-2 rounded-lg">EventEase</span>
-        </Link>
+        <div className="flex gap-4 items-center">
+          <DarkModeToggle />
+          <Link href="/">
+              <span className="text-2xl font-bold bg-orange-500 py-1 px-2 rounded-lg">EventEase</span>
+          </Link>
+        </div>
     </div>
   )
 }
