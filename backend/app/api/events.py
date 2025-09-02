@@ -45,43 +45,50 @@ def create_event(event: EventCreate, db: Session = Depends(get_db),
 @router.get("/", response_model=PaginatedResponse[EventOut])
 def list_events(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    # current_user: User = Depends(get_current_user),
     radius: Optional[int] = 50,
     limit: int = 10, 
     offset: int = 0
 ):
     query = db.query(Event)
-    total = 0
+    total = query.count()
+    events = query.offset(offset).limit(limit).all()
+    return PaginatedResponse(
+        total=query.count(),
+        limit=limit,
+        offset=offset,
+        items=events
+    )
 
-    # Nearby events first (if user has coordinates)
-    if current_user.latitude and current_user.longitude:
-        events = query.all()
-        nearby = [
-            e for e in events if e.latitude and e.longitude and
-            haversine(current_user.latitude, current_user.longitude, e.latitude, e.longitude) <= radius
-        ]
-        total = len(nearby)
-        if nearby:
-            return format_events(nearby, limit, offset)
+    # # Nearby events first (if user has coordinates)
+    # if current_user.latitude and current_user.longitude:
+    #     events = query.all()
+    #     nearby = [
+    #         e for e in events if e.latitude and e.longitude and
+    #         haversine(current_user.latitude, current_user.longitude, e.latitude, e.longitude) <= radius
+    #     ]
+    #     total = len(nearby)
+    #     if nearby:
+    #         return format_events(nearby, limit, offset)
 
-    # Fallback to same city
-    if current_user.city:
-        city_events = query.filter(Event.city == current_user.city).all()
-        total = len(city_events)
-        if city_events:
-            return format_events(city_events, limit, offset)
+    # # Fallback to same city
+    # if current_user.city:
+    #     city_events = query.filter(Event.city == current_user.city).all()
+    #     total = len(city_events)
+    #     if city_events:
+    #         return format_events(city_events, limit, offset)
 
-    # Fallback to same country
-    if current_user.country:
-        country_events = query.filter(Event.country == current_user.country).all()
-        total = len(country_events)
-        if country_events:
-            return format_events(country_events, limit, offset)
+    # # Fallback to same country
+    # if current_user.country:
+    #     country_events = query.filter(Event.country == current_user.country).all()
+    #     total = len(country_events)
+    #     if country_events:
+    #         return format_events(country_events, limit, offset)
 
-    # Final fallback latest events
-    latest = query.order_by(Event.start_time.desc()).all()
-    total = len(latest)
-    return format_events(latest, limit, offset)
+    # # Final fallback latest events
+    # latest = query.order_by(Event.start_time.desc()).all()
+    # total = len(latest)
+    # return format_events(latest, limit, offset)
 
 
 # Get event by ID

@@ -29,7 +29,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning data-theme="dark">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased
-         bg-white dark:bg-gray-900 dark:text-white transition-colors duration-300`}
+         bg-orange-200 dark:bg-gray-900 dark:text-white transition-colors duration-300`}
       >
         <Providers>
             <Header />

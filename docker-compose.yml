@@ -1,4 +1,4 @@
-version: "3.9"
+# version: "3.9"
 
 services:
   backend:
@@ -12,6 +12,8 @@ services:
       - .env.dev
     depends_on:
       - db
+    networks:
+      - eventease_net
 
   frontend:
     build: ./frontend
@@ -24,7 +26,10 @@ services:
       - /app/node_modules
     environment:
       - NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
-
+    depends_on:
+      - backend
+    networks:
+      - eventease_net
   db:
     image: postgres:15
     restart: always
@@ -36,6 +41,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-
+    networks:
+      - eventease_net
 volumes:
   postgres_data:
+
+networks:
+  eventease_net:
+    driver: bridge

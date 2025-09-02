@@ -3,6 +3,8 @@
 /* @tailwindcss ignore */
 @custom-variant dark (&:where(.dark, .dark *));
 
+
+
 /* :root {
   --background: #ffffff;
   --foreground: #171717;
