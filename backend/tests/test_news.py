@@ -573,3 +573,200 @@ class TestNews:
         else:
             # If it returns an error, that's also acceptable
             assert response.status_code in [400, 422]
+    
+    def test_news_pagination_comprehensive(self, test_client: TestClient, db: Session):
+        """
+        Test comprehensive pagination scenarios for news.
+        
+        **Test Scenario:**
+        - Create multiple news articles
+        - Test different page sizes and offsets
+        - Verify pagination metadata accuracy
+        - Test boundary conditions
+        
+        **Expected Result:**
+        - Correct pagination metadata
+        - Accurate item counts
+        - Proper offset/limit handling
+        """
+        # Create 15 test news articles
+        news_articles = []
+        for i in range(15):
+            news = News(
+                title=f"News Article {i+1}",
+                summary=f"Summary for article {i+1}",
+                url=f"https://example.com/news{i+1}",
+                source=f"Source {i+1}",
+                topic=f"Topic {i+1}"
+            )
+            news_articles.append(news)
+        
+        db.add_all(news_articles)
+        db.commit()
+        
+        # Test first page (limit=5, offset=0)
+        response = test_client.get("/news/?limit=5&offset=0")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] >= 15
+        assert data["limit"] == 5
+        assert data["offset"] == 0
+        assert len(data["items"]) == 5
+        
+        # Test second page (limit=5, offset=5)
+        response = test_client.get("/news/?limit=5&offset=5")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] >= 15
+        assert data["limit"] == 5
+        assert data["offset"] == 5
+        assert len(data["items"]) == 5
+        
+        # Test third page (limit=5, offset=10)
+        response = test_client.get("/news/?limit=5&offset=10")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] >= 15
+        assert data["limit"] == 5
+        assert data["offset"] == 10
+        assert len(data["items"]) == 5
+        
+        # Test last page (limit=5, offset=15) - should return empty
+        response = test_client.get("/news/?limit=5&offset=15")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] >= 15
+        assert data["limit"] == 5
+        assert data["offset"] == 15
+        assert len(data["items"]) == 0
+        
+        # Test large limit (should return all items)
+        response = test_client.get("/news/?limit=100&offset=0")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] >= 15
+        assert data["limit"] == 100
+        assert data["offset"] == 0
+        assert len(data["items"]) >= 15
+    
+    def test_news_pagination_with_filters(self, test_client: TestClient, db: Session):
+        """
+        Test pagination works correctly with filtering.
+        
+        **Test Scenario:**
+        - Create news with different sources and topics
+        - Apply filters and test pagination
+        - Verify filter + pagination combination
+        
+        **Expected Result:**
+        - Pagination works with filters
+        - Total count reflects filtered results
+        - Items respect both filter and pagination
+        """
+        # Create news with different sources
+        techcrunch_news = [
+            News(
+                title=f"TechCrunch Article {i+1}",
+                summary=f"TechCrunch summary {i+1}",
+                url=f"https://techcrunch.com/article{i+1}",
+                source="TechCrunch",
+                topic="Technology"
+            ) for i in range(8)
+        ]
+        
+        hackernews_news = [
+            News(
+                title=f"HackerNews Article {i+1}",
+                summary=f"HackerNews summary {i+1}",
+                url=f"https://hackernews.com/article{i+1}",
+                source="HackerNews",
+                topic="Programming"
+            ) for i in range(7)
+        ]
+        
+        db.add_all(techcrunch_news + hackernews_news)
+        db.commit()
+        
+        # Test pagination with source filter
+        response = test_client.get("/news/?source=TechCrunch&limit=3&offset=0")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] >= 8  # Should have at least 8 TechCrunch articles
+        assert data["limit"] == 3
+        assert data["offset"] == 0
+        assert len(data["items"]) == 3
+        # All items should be from TechCrunch
+        assert all(item["source"] == "TechCrunch" for item in data["items"])
+        
+        # Test second page with source filter
+        response = test_client.get("/news/?source=TechCrunch&limit=3&offset=3")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] >= 8
+        assert data["limit"] == 3
+        assert data["offset"] == 3
+        assert len(data["items"]) == 3
+        assert all(item["source"] == "TechCrunch" for item in data["items"])
+        
+        # Test pagination with topic filter
+        response = test_client.get("/news/?topic=Programming&limit=2&offset=0")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] >= 7  # Should have at least 7 Programming articles
+        assert data["limit"] == 2
+        assert data["offset"] == 0
+        assert len(data["items"]) == 2
+        assert all(item["topic"] == "Programming" for item in data["items"])
+    
+    def test_news_pagination_response_structure(self, test_client: TestClient, db: Session):
+        """
+        Test that pagination response has correct structure.
+        
+        **Test Scenario:**
+        - Verify PaginatedResponse structure
+        - Check all required fields are present
+        - Validate field types and values
+        
+        **Expected Result:**
+        - Correct response structure
+        - All required fields present
+        - Proper data types
+        """
+        # Create some test news
+        news = News(
+            title="Structure Test News",
+            summary="Testing response structure",
+            url="https://example.com/structure",
+            source="Test Source",
+            topic="Testing"
+        )
+        db.add(news)
+        db.commit()
+        
+        response = test_client.get("/news/?limit=10&offset=0")
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Verify response structure matches PaginatedResponse schema
+        required_fields = ["total", "limit", "offset", "items"]
+        for field in required_fields:
+            assert field in data, f"Response should contain '{field}' field"
+        
+        # Verify field types
+        assert isinstance(data["total"], int), "Total should be an integer"
+        assert isinstance(data["limit"], int), "Limit should be an integer"
+        assert isinstance(data["offset"], int), "Offset should be an integer"
+        assert isinstance(data["items"], list), "Items should be a list"
+        
+        # Verify field values are reasonable
+        assert data["total"] >= 0, "Total should be non-negative"
+        assert data["limit"] >= 0, "Limit should be non-negative"
+        assert data["offset"] >= 0, "Offset should be non-negative"
+        assert len(data["items"]) <= data["limit"], "Items count should not exceed limit"
+        
+        # If there are items, verify they have the expected structure
+        if data["items"]:
+            item = data["items"][0]
+            expected_item_fields = ["id", "title", "summary", "url", "source", "topic"]
+            for field in expected_item_fields:
+                assert field in item, f"News item should contain '{field}' field"

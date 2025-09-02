@@ -784,3 +784,253 @@ class TestUsers:
             }         
             response = test_client.post("/users/", json=user_data)
             assert response.status_code == 200, f"Name '{name}' should be valid"
+    
+    def test_users_pagination_comprehensive(self, test_client: TestClient, db: Session):
+        """
+        Test comprehensive pagination scenarios for users.
+        
+        **Test Scenario:**
+        - Create multiple users
+        - Test different page sizes and offsets
+        - Verify pagination metadata accuracy
+        - Test boundary conditions
+        
+        **Expected Result:**
+        - Correct pagination metadata
+        - Accurate item counts
+        - Proper offset/limit handling
+        """
+        # Create 20 test users
+        users = []
+        for i in range(20):
+            user_data = {
+                "email": f"pagination{i}@example.com",
+                "name": f"Pagination User {i+1}",
+                "password": "Pagination123!"
+            }
+            users.append(user_data)
+        
+        # Create users in database
+        for user_data in users:
+            test_client.post("/users/", json=user_data)
+        
+        # Test first page (limit=5, offset=0)
+        response = test_client.get("/users/?limit=5&offset=0")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] >= 20
+        assert data["limit"] == 5
+        assert data["offset"] == 0
+        assert len(data["items"]) == 5
+        
+        # Test second page (limit=5, offset=5)
+        response = test_client.get("/users/?limit=5&offset=5")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] >= 20
+        assert data["limit"] == 5
+        assert data["offset"] == 5
+        assert len(data["items"]) == 5
+        
+        # Test third page (limit=5, offset=10)
+        response = test_client.get("/users/?limit=5&offset=10")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] >= 20
+        assert data["limit"] == 5
+        assert data["offset"] == 10
+        assert len(data["items"]) == 5
+        
+        # Test fourth page (limit=5, offset=15)
+        response = test_client.get("/users/?limit=5&offset=15")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] >= 20
+        assert data["limit"] == 5
+        assert data["offset"] == 15
+        assert len(data["items"]) == 5
+        
+        # Test last page (limit=5, offset=20) - should return empty
+        response = test_client.get("/users/?limit=5&offset=20")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] >= 20
+        assert data["limit"] == 5
+        assert data["offset"] == 20
+        assert len(data["items"]) == 0
+        
+        # Test large limit (should return all items)
+        response = test_client.get("/users/?limit=100&offset=0")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] >= 20
+        assert data["limit"] == 100
+        assert data["offset"] == 0
+        assert len(data["items"]) >= 20
+    
+    def test_users_pagination_edge_cases(self, test_client: TestClient, db: Session):
+        """
+        Test users pagination with edge cases.
+        
+        **Test Scenario:**
+        - Large offset values
+        - Zero limits
+        - Empty result sets
+        - Negative values
+        
+        **Expected Result:**
+        - Appropriate handling of edge cases
+        - Consistent response structure
+        """
+        # Test with large offset
+        response = test_client.get("/users/?offset=1000&limit=10")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["offset"] == 1000
+        assert data["total"] >= 0
+        assert len(data["items"]) >= 0
+        
+        # Test with zero limit
+        response = test_client.get("/users/?limit=0")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["limit"] == 0
+        assert len(data["items"]) == 0
+        
+        # Test with negative limit (API may not handle this gracefully)
+        response = test_client.get("/users/?limit=-5")
+        # The API might return an error or default to a positive value
+        # We'll test for either case
+        if response.status_code == 200:
+            data = response.json()
+            # If successful, ensure we get a valid response
+            assert "total" in data
+            assert "items" in data
+        else:
+            # If it returns an error, that's also acceptable
+            assert response.status_code in [400, 422]
+        
+        # Test with negative offset (API may not handle this gracefully)
+        response = test_client.get("/users/?offset=-10&limit=5")
+        if response.status_code == 200:
+            data = response.json()
+            # If successful, ensure we get a valid response
+            assert "total" in data
+            assert "items" in data
+        else:
+            # If it returns an error, that's also acceptable
+            assert response.status_code in [400, 422]
+    
+    def test_users_pagination_response_structure(self, test_client: TestClient, db: Session):
+        """
+        Test that users pagination response has correct structure.
+        
+        **Test Scenario:**
+        - Verify PaginatedResponse structure for users
+        - Check all required fields are present
+        - Validate field types and values
+        
+        **Expected Result:**
+        - Correct response structure
+        - All required fields present
+        - Proper data types
+        """
+        # Create a test user
+        user_data = {
+            "email": "structure@example.com",
+            "name": "Structure Test User",
+            "password": "Structure123!"
+        }
+        test_client.post("/users/", json=user_data)
+        
+        response = test_client.get("/users/?limit=10&offset=0")
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Verify response structure matches PaginatedResponse schema
+        required_fields = ["total", "limit", "offset", "items"]
+        for field in required_fields:
+            assert field in data, f"Response should contain '{field}' field"
+        
+        # Verify field types
+        assert isinstance(data["total"], int), "Total should be an integer"
+        assert isinstance(data["limit"], int), "Limit should be an integer"
+        assert isinstance(data["offset"], int), "Offset should be an integer"
+        assert isinstance(data["items"], list), "Items should be a list"
+        
+        # Verify field values are reasonable
+        assert data["total"] >= 0, "Total should be non-negative"
+        assert data["limit"] >= 0, "Limit should be non-negative"
+        assert data["offset"] >= 0, "Offset should be non-negative"
+        assert len(data["items"]) <= data["limit"], "Items count should not exceed limit"
+        
+        # If there are items, verify they have the expected structure
+        if data["items"]:
+            item = data["items"][0]
+            expected_item_fields = ["id", "email", "name", "is_admin"]
+            for field in expected_item_fields:
+                assert field in item, f"User item should contain '{field}' field"
+            
+            # Verify sensitive data is not exposed
+            assert "password_hash" not in item, "Password hash should not be exposed"
+            assert "password" not in item, "Password should not be exposed"
+    
+    def test_users_pagination_data_integrity(self, test_client: TestClient, db: Session):
+        """
+        Test that pagination maintains data integrity across pages.
+        
+        **Test Scenario:**
+        - Create users with specific data
+        - Verify data consistency across pagination
+        - Check that no data is lost or duplicated
+        
+        **Expected Result:**
+        - Data integrity maintained across pages
+        - No duplicate users in different pages
+        - All users accounted for
+        """
+        # Create users with specific patterns
+        users = []
+        for i in range(10):
+            user_data = {
+                "email": f"integrity{i}@example.com",
+                "name": f"Integrity User {i+1}",
+                "password": "Integrity123!"
+            }
+            users.append(user_data)
+        
+        # Create users in database
+        created_user_ids = []
+        for user_data in users:
+            response = test_client.post("/users/", json=user_data)
+            assert response.status_code == 200
+            created_user_ids.append(response.json()["id"])
+        
+        # Collect all users across multiple pages
+        all_users = []
+        page = 0
+        limit = 3
+        
+        while True:
+            response = test_client.get(f"/users/?limit={limit}&offset={page * limit}")
+            assert response.status_code == 200
+            data = response.json()
+            
+            if not data["items"]:
+                break
+                
+            all_users.extend(data["items"])
+            page += 1
+            
+            # Safety check to prevent infinite loop
+            if page > 10:
+                break
+        
+        # Verify all created users are present
+        found_user_ids = [user["id"] for user in all_users]
+        for user_id in created_user_ids:
+            assert user_id in found_user_ids, f"User {user_id} should be found in pagination"
+        
+        # Verify no duplicates
+        unique_ids = set(found_user_ids)
+        assert len(unique_ids) == len(found_user_ids), "No duplicate users should be returned"

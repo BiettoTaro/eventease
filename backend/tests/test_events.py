@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from app.models.event import Event
+from app.models import Event
 from app.models.user import User
 from app.utils.security import get_password_hash, create_access_token
 from app.schemas.event import EventCreate
@@ -677,3 +677,254 @@ class TestEvents:
         assert len(events) >= 1
         # The exact location event should be prioritized
         assert any(e["title"] == "Exact Location Event" for e in events)
+    
+    def test_events_pagination_comprehensive(self, test_client: TestClient, db: Session):
+        """
+        Test comprehensive pagination scenarios for events.
+        
+        **Test Scenario:**
+        - Create multiple events
+        - Test different page sizes and offsets
+        - Verify pagination metadata accuracy
+        - Test boundary conditions
+        
+        **Expected Result:**
+        - Correct pagination metadata
+        - Accurate item counts
+        - Proper offset/limit handling
+        """
+        # Create user for authentication
+        user = User(
+            email="pagination@test.com",
+            name="Pagination User",
+            password_hash=get_password_hash("Pagination123!"),
+            is_admin=False
+        )
+        db.add(user)
+        db.commit()
+        
+        # Create 12 test events
+        events = []
+        for i in range(12):
+            event = Event(
+                title=f"Event {i+1}",
+                description=f"Description for event {i+1}",
+                start_time=datetime.now(timezone.utc) + timedelta(days=i+1),
+                end_time=datetime.now(timezone.utc) + timedelta(days=i+1, hours=8)
+            )
+            events.append(event)
+        
+        db.add_all(events)
+        db.commit()
+        
+        token = create_access_token({"sub": str(user.id)})
+        
+        # Test first page (limit=4, offset=0)
+        response = test_client.get(
+            "/events/?limit=4&offset=0",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] >= 12
+        assert data["limit"] == 4
+        assert data["offset"] == 0
+        assert len(data["items"]) == 4
+        
+        # Test second page (limit=4, offset=4)
+        response = test_client.get(
+            "/events/?limit=4&offset=4",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] >= 12
+        assert data["limit"] == 4
+        assert data["offset"] == 4
+        assert len(data["items"]) == 4
+        
+        # Test third page (limit=4, offset=8)
+        response = test_client.get(
+            "/events/?limit=4&offset=8",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] >= 12
+        assert data["limit"] == 4
+        assert data["offset"] == 8
+        assert len(data["items"]) == 4
+        
+        # Test last page (limit=4, offset=12) - should return empty
+        response = test_client.get(
+            "/events/?limit=4&offset=12",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] >= 12
+        assert data["limit"] == 4
+        assert data["offset"] == 12
+        assert len(data["items"]) == 0
+    
+    def test_events_pagination_with_radius(self, test_client: TestClient, db: Session):
+        """
+        Test pagination works correctly with radius filtering.
+        
+        **Test Scenario:**
+        - Create events at different distances
+        - Apply radius filter and test pagination
+        - Verify radius + pagination combination
+        
+        **Expected Result:**
+        - Pagination works with radius filter
+        - Total count reflects filtered results
+        - Items respect both radius and pagination
+        """
+        # Create user with specific location
+        user = User(
+            email="radius@test.com",
+            name="Radius User",
+            password_hash=get_password_hash("Radius123!"),
+            latitude=51.5074,  # London
+            longitude=-0.1278
+        )
+        db.add(user)
+        db.commit()
+        
+        # Create events at different distances from London
+        # Event 1: Same location (0km)
+        event1 = Event(
+            title="London Event 1",
+            description="Event in London",
+            latitude=51.5074,
+            longitude=-0.1278,
+            start_time=datetime.now(timezone.utc) + timedelta(days=1),
+            end_time=datetime.now(timezone.utc) + timedelta(days=1, hours=8)
+        )
+        
+        # Event 2: Near London (~10km)
+        event2 = Event(
+            title="Near London Event 1",
+            description="Event near London",
+            latitude=51.5075,
+            longitude=-0.1279,
+            start_time=datetime.now(timezone.utc) + timedelta(days=2),
+            end_time=datetime.now(timezone.utc) + timedelta(days=2, hours=8)
+        )
+        
+        # Event 3: Near London (~10km)
+        event3 = Event(
+            title="Near London Event 2",
+            description="Event near London",
+            latitude=51.5076,
+            longitude=-0.1280,
+            start_time=datetime.now(timezone.utc) + timedelta(days=3),
+            end_time=datetime.now(timezone.utc) + timedelta(days=3, hours=8)
+        )
+        
+        # Event 4: Far from London (~100km)
+        event4 = Event(
+            title="Far Event",
+            description="Event far from London",
+            latitude=52.2053,  # Cambridge
+            longitude=0.1218,
+            start_time=datetime.now(timezone.utc) + timedelta(days=4),
+            end_time=datetime.now(timezone.utc) + timedelta(days=4, hours=8)
+        )
+        
+        db.add_all([event1, event2, event3, event4])
+        db.commit()
+        
+        token = create_access_token({"sub": str(user.id)})
+        
+        # Test pagination with radius filter (should include nearby events)
+        response = test_client.get(
+            "/events/?radius=50&limit=2&offset=0",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] >= 3  # Should have at least 3 nearby events
+        assert data["limit"] == 2
+        assert data["offset"] == 0
+        assert len(data["items"]) == 2
+        
+        # Test second page with radius filter
+        response = test_client.get(
+            "/events/?radius=50&limit=2&offset=2",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] >= 3
+        assert data["limit"] == 2
+        assert data["offset"] == 2
+        assert len(data["items"]) >= 1  # Should have at least 1 more event
+    
+    def test_events_pagination_response_structure(self, test_client: TestClient, db: Session):
+        """
+        Test that events pagination response has correct structure.
+        
+        **Test Scenario:**
+        - Verify PaginatedResponse structure for events
+        - Check all required fields are present
+        - Validate field types and values
+        
+        **Expected Result:**
+        - Correct response structure
+        - All required fields present
+        - Proper data types
+        """
+        # Create user for authentication
+        user = User(
+            email="structure@test.com",
+            name="Structure User",
+            password_hash=get_password_hash("Structure123!"),
+            is_admin=False
+        )
+        db.add(user)
+        db.commit()
+        
+        # Create a test event
+        event = Event(
+            title="Structure Test Event",
+            description="Testing response structure",
+            start_time=datetime.now(timezone.utc) + timedelta(days=1),
+            end_time=datetime.now(timezone.utc) + timedelta(days=1, hours=8)
+        )
+        db.add(event)
+        db.commit()
+        
+        token = create_access_token({"sub": str(user.id)})
+        
+        response = test_client.get(
+            "/events/?limit=10&offset=0",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Verify response structure matches PaginatedResponse schema
+        required_fields = ["total", "limit", "offset", "items"]
+        for field in required_fields:
+            assert field in data, f"Response should contain '{field}' field"
+        
+        # Verify field types
+        assert isinstance(data["total"], int), "Total should be an integer"
+        assert isinstance(data["limit"], int), "Limit should be an integer"
+        assert isinstance(data["offset"], int), "Offset should be an integer"
+        assert isinstance(data["items"], list), "Items should be a list"
+        
+        # Verify field values are reasonable
+        assert data["total"] >= 0, "Total should be non-negative"
+        assert data["limit"] >= 0, "Limit should be non-negative"
+        assert data["offset"] >= 0, "Offset should be non-negative"
+        assert len(data["items"]) <= data["limit"], "Items count should not exceed limit"
+        
+        # If there are items, verify they have the expected structure
+        if data["items"]:
+            item = data["items"][0]
+            expected_item_fields = ["id", "title", "description", "start_time", "end_time"]
+            for field in expected_item_fields:
+                assert field in item, f"Event item should contain '{field}' field"

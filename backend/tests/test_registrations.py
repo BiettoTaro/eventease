@@ -434,3 +434,304 @@ def test_list_registrations_for_event_non_admin(test_client: TestClient, db: Ses
     
     # Verify access is denied for non-admin users
     assert response.status_code == 403, "Non-admin users should not be able to list registrations"
+
+
+# =============================================================================
+# Pagination Tests for Registrations
+# =============================================================================
+
+def test_registrations_pagination_comprehensive(test_client: TestClient, db: Session, admin_user: User, test_event: Event):
+    """
+    Test comprehensive pagination scenarios for event registrations.
+    
+    **Test Scenario:**
+    - Create multiple users and register them for an event
+    - Test different page sizes and offsets
+    - Verify pagination metadata accuracy
+    - Test boundary conditions
+    
+    **Expected Result:**
+    - Correct pagination metadata
+    - Accurate item counts
+    - Proper offset/limit handling
+    """
+    # Create 15 test users and register them for the event
+    registered_users = []
+    for i in range(15):
+        user = create_user(db, f"pagination{i}@test.com")
+        registered_users.append(user)
+        
+        # Register user for the event
+        token = create_access_token(data={"sub": user.email})
+        response = test_client.post(
+            f"/registrations/{test_event.id}", 
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        assert response.status_code == 200, f"User {i} should register successfully"
+    
+    # Admin token for listing registrations
+    admin_token = create_access_token(data={"sub": admin_user.email})
+    
+    # Test first page (limit=5, offset=0)
+    response = test_client.get(
+        f"/registrations/event/{test_event.id}?limit=5&offset=0",
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] >= 15
+    assert data["limit"] == 5
+    assert data["offset"] == 0
+    assert len(data["items"]) == 5
+    
+    # Test second page (limit=5, offset=5)
+    response = test_client.get(
+        f"/registrations/event/{test_event.id}?limit=5&offset=5",
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] >= 15
+    assert data["limit"] == 5
+    assert data["offset"] == 5
+    assert len(data["items"]) == 5
+    
+    # Test third page (limit=5, offset=10)
+    response = test_client.get(
+        f"/registrations/event/{test_event.id}?limit=5&offset=10",
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] >= 15
+    assert data["limit"] == 5
+    assert data["offset"] == 10
+    assert len(data["items"]) == 5
+    
+    # Test last page (limit=5, offset=15) - should return empty
+    response = test_client.get(
+        f"/registrations/event/{test_event.id}?limit=5&offset=15",
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] >= 15
+    assert data["limit"] == 5
+    assert data["offset"] == 15
+    assert len(data["items"]) == 0
+
+
+def test_registrations_pagination_edge_cases(test_client: TestClient, db: Session, admin_user: User, test_event: Event):
+    """
+    Test registrations pagination with edge cases.
+    
+    **Test Scenario:**
+    - Large offset values
+    - Zero limits
+    - Empty result sets
+    - Negative values
+    
+    **Expected Result:**
+    - Appropriate handling of edge cases
+    - Consistent response structure
+    """
+    admin_token = create_access_token(data={"sub": admin_user.email})
+    
+    # Test with large offset
+    response = test_client.get(
+        f"/registrations/event/{test_event.id}?offset=1000&limit=10",
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["offset"] == 1000
+    assert data["total"] >= 0
+    assert len(data["items"]) >= 0
+    
+    # Test with zero limit
+    response = test_client.get(
+        f"/registrations/event/{test_event.id}?limit=0",
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["limit"] == 0
+    assert len(data["items"]) == 0
+    
+    # Test with negative limit (API may not handle this gracefully)
+    response = test_client.get(
+        f"/registrations/event/{test_event.id}?limit=-5",
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    # The API might return an error or default to a positive value
+    if response.status_code == 200:
+        data = response.json()
+        # If successful, ensure we get a valid response
+        assert "total" in data
+        assert "items" in data
+    else:
+        # If it returns an error, that's also acceptable
+        assert response.status_code in [400, 422]
+
+
+def test_registrations_pagination_response_structure(test_client: TestClient, db: Session, admin_user: User, test_event: Event):
+    """
+    Test that registrations pagination response has correct structure.
+    
+    **Test Scenario:**
+    - Verify PaginatedResponse structure for registrations
+    - Check all required fields are present
+    - Validate field types and values
+    
+    **Expected Result:**
+    - Correct response structure
+    - All required fields present
+    - Proper data types
+    """
+    # Create a test user and register them
+    user = create_user(db, "structure@test.com")
+    token = create_access_token(data={"sub": user.email})
+    test_client.post(
+        f"/registrations/{test_event.id}", 
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    
+    # Admin token for listing registrations
+    admin_token = create_access_token(data={"sub": admin_user.email})
+    
+    response = test_client.get(
+        f"/registrations/event/{test_event.id}?limit=10&offset=0",
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    
+    # Verify response structure matches PaginatedResponse schema
+    required_fields = ["total", "limit", "offset", "items"]
+    for field in required_fields:
+        assert field in data, f"Response should contain '{field}' field"
+    
+    # Verify field types
+    assert isinstance(data["total"], int), "Total should be an integer"
+    assert isinstance(data["limit"], int), "Limit should be an integer"
+    assert isinstance(data["offset"], int), "Offset should be an integer"
+    assert isinstance(data["items"], list), "Items should be a list"
+    
+    # Verify field values are reasonable
+    assert data["total"] >= 0, "Total should be non-negative"
+    assert data["limit"] >= 0, "Limit should be non-negative"
+    assert data["offset"] >= 0, "Offset should be non-negative"
+    assert len(data["items"]) <= data["limit"], "Items count should not exceed limit"
+    
+    # If there are items, verify they have the expected structure
+    if data["items"]:
+        item = data["items"][0]
+        expected_item_fields = ["id", "user_id", "event_id", "registered_at"]
+        for field in expected_item_fields:
+            assert field in item, f"Registration item should contain '{field}' field"
+
+
+def test_registrations_pagination_data_integrity(test_client: TestClient, db: Session, admin_user: User, test_event: Event):
+    """
+    Test that pagination maintains data integrity across pages.
+    
+    **Test Scenario:**
+    - Create multiple registrations
+    - Verify data consistency across pagination
+    - Check that no data is lost or duplicated
+    
+    **Expected Result:**
+    - Data integrity maintained across pages
+    - No duplicate registrations in different pages
+    - All registrations accounted for
+    """
+    # Create 10 test users and register them
+    registered_user_ids = []
+    for i in range(10):
+        user = create_user(db, f"integrity{i}@test.com")
+        registered_user_ids.append(user.id)
+        
+        # Register user for the event
+        token = create_access_token(data={"sub": user.email})
+        response = test_client.post(
+            f"/registrations/{test_event.id}", 
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        assert response.status_code == 200, f"User {i} should register successfully"
+    
+    # Admin token for listing registrations
+    admin_token = create_access_token(data={"sub": admin_user.email})
+    
+    # Collect all registrations across multiple pages
+    all_registrations = []
+    page = 0
+    limit = 3
+    
+    while True:
+        response = test_client.get(
+            f"/registrations/event/{test_event.id}?limit={limit}&offset={page * limit}",
+            headers={"Authorization": f"Bearer {admin_token}"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        
+        if not data["items"]:
+            break
+            
+        all_registrations.extend(data["items"])
+        page += 1
+        
+        # Safety check to prevent infinite loop
+        if page > 10:
+            break
+    
+    # Verify all registered users are present
+    found_user_ids = [reg["user_id"] for reg in all_registrations]
+    for user_id in registered_user_ids:
+        assert user_id in found_user_ids, f"User {user_id} should be found in pagination"
+    
+    # Verify no duplicates
+    unique_user_ids = set(found_user_ids)
+    assert len(unique_user_ids) == len(found_user_ids), "No duplicate registrations should be returned"
+
+
+def test_registrations_pagination_unauthorized_access(test_client: TestClient, db: Session, normal_user: User, test_event: Event):
+    """
+    Test that pagination endpoints properly enforce authorization.
+    
+    **Test Scenario:**
+    - Non-admin user attempts to access pagination
+    - Verify proper error handling
+    - Test different pagination parameters
+    
+    **Expected Result:**
+    - HTTP 403 Forbidden for non-admin users
+    - Consistent error responses
+    """
+    # Create some registrations first
+    for i in range(5):
+        user = create_user(db, f"unauth{i}@test.com")
+        token = create_access_token(data={"sub": user.email})
+        test_client.post(
+            f"/registrations/{test_event.id}", 
+            headers={"Authorization": f"Bearer {token}"}
+        )
+    
+    # Normal user token (non-admin)
+    normal_token = create_access_token(data={"sub": normal_user.email})
+    
+    # Test various pagination parameters with non-admin user
+    pagination_tests = [
+        "?limit=5&offset=0",
+        "?limit=10&offset=0", 
+        "?limit=0&offset=0",
+        "?limit=5&offset=10"
+    ]
+    
+    for params in pagination_tests:
+        response = test_client.get(
+            f"/registrations/event/{test_event.id}{params}",
+            headers={"Authorization": f"Bearer {normal_token}"}
+        )
+        assert response.status_code == 403, f"Non-admin should not access pagination with params: {params}"
+        assert "Not authorized" in response.json()["detail"], "Error message should indicate authorization failure"
