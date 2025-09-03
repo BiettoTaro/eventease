@@ -49,4 +49,4 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
             detail=f"Token generation failed: {str(e)}",
         )
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": access_token, "token_type": "Bearer"}

@@ -1,9 +1,5 @@
-"use client"
-
-import { useEffect, useState } from 'react'
-import { fetchEvents } from '../../lib/api'
-import Results from '../../components/Results'
-import React from 'react'
+import Results from "../../components/Results";
+import { fetchEvents } from "../../lib/api";
 
 type EventItem = {
     id: string;
@@ -12,23 +8,28 @@ type EventItem = {
     type: string;
 }
 
-export default function EventsPage() {
-    const [events, setEvents] = useState<EventItem[]>([]);
-    const [loading, setLoading] = useState(true);
-    
-    useEffect(() => {
-        fetchEvents()
-        .then(setEvents)
-        .catch((err) => console.error("Error fetching events:", err))
-        .finally(() => setLoading(false));
-    }, []);
+export default async function EventsPage() {
+  let events: EventItem[] = [];
 
-  if (loading) return <div>Loading...</div>;
-    
+  try {
+    events = await fetchEvents();
+  } catch (err) {
+    console.error("Error fetching events:", err);
+    return (
+      <div className="p-10 text-center text-red-500">
+        Could not load events right now.
+      </div>
+    );
+  }
+
   return (
-    <div className='max-w-6xl mx-auto p-3 space-y-4'>
-        <h2 className='text-2xl font-bold mb-6'>Latest Events</h2>
-        <Results results={events}/>
+    <div className="max-w-6xl mx-auto p-3 space-y-4">
+      <h2 className="text-2xl font-bold mb-6">Upcoming Events</h2>
+      {events.length > 0 ? (
+        <Results results={events} />
+      ) : (
+        <p>No events available.</p>
+      )}
     </div>
-  )
+  );
 }

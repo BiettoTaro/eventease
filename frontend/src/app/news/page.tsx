@@ -1,34 +1,35 @@
-"use client"
-
-import { useEffect, useState } from 'react'
-import { fetchNews } from '../../lib/api'
-import Results from '../../components/Results'
-import React from 'react'
+import Results from "../../components/Results";
+import { fetchNews } from "../../lib/api";
 
 type NewsItem = {
     id: string;
     title: string;
     description: string;
     type: string;
-} 
+}
 
-export default function NewsPage() {
-    const [news, setNews] = useState<NewsItem[]>([]);
-    const [loading, setLoading] = useState(true);
-    
-    useEffect(() => {
-        fetchNews()
-        .then(setNews)
-        .catch((err) => console.error("Error fetching news:", err))
-        .finally(() => setLoading(false));
-    }, []);
+export default async function NewsPage() {
+  let news: NewsItem[] = [];
 
-  if (loading) return <div>Loading...</div>;
-    
+  try {
+    news = await fetchNews();
+  } catch (err) {
+    console.error("Error fetching news:", err);
+    return (
+      <div className="p-10 text-center text-red-500">
+        Could not load news right now.
+      </div>
+    );
+  }
+
   return (
-    <div className='max-w-6xl mx-auto p-3 space-y-4'>
-        <h2 className='text-2xl font-bold mb-6'>Latest News</h2>
-        <Results results={news}/>
+    <div className="max-w-6xl mx-auto p-3 space-y-4">
+      <h2 className="text-2xl font-bold mb-6">Latest News</h2>
+      {news.length > 0 ? (
+        <Results results={news} />
+      ) : (
+        <p>No news available.</p>
+      )}
     </div>
-  )
+  );
 }

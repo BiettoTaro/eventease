@@ -3,7 +3,6 @@
 services:
   backend:
     build: ./backend
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ./backend:/app
     ports:
@@ -12,6 +11,18 @@ services:
       - .env.dev
     depends_on:
       - db
+    command: 
+      sh -c "alembic upgrade head &&
+             python -m seeder.seed_admin &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    networks:
+      - eventease_net
+
+  refresher:
+    build: ./backend
+    depends_on:
+      - backend
+    command: python scripts/refresh_data.py
     networks:
       - eventease_net
 
@@ -20,7 +31,7 @@ services:
     ports:
       - "3000:3000"
     working_dir: /app
-    command: npm run dev
+    command: node --max-old-space-size=2048 node_modules/.bin/next dev
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -38,13 +49,13 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: eventease
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     networks:
       - eventease_net
 volumes:
-  postgres_data:
+  db_data:
 
 networks:
   eventease_net:

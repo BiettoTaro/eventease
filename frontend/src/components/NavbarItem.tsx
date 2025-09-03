@@ -1,9 +1,10 @@
 "use client"
+
 import Link from 'next/link'
 import React from 'react'
 import { usePathname } from 'next/navigation';
 
-interface NavbarItemProps {
+type NavbarItemProps = {
     title: string;
     address: string;
 
