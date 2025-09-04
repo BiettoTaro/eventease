@@ -1,0 +1,37 @@
+[33mcommit 5dcb4f7a9c94c8bed63e935c92cc27e743dbfa43[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mandrei/test-event[m[33m)[m
+Author: AndrianMg <162803090+AndrianMg@users.noreply.github.com>
+Date:   Sun Aug 31 13:09:40 2025 +0100
+
+    Add comprehensive test suite and fix warnings - Implement test_events.py, test_users.py, test_registrations.py - Add conftest.py with proper test configuration - Fix Pydantic deprecation warnings - Update schemas and API endpoints - Add pytest.ini for warning suppression
+
+backend/alembic.ini
+backend/app/api/events.py
+backend/app/api/news.py
+backend/app/api/registrations.py
+backend/app/api/users.py
+backend/app/models/__init__.py
+backend/app/models/event.py
+backend/app/models/news.py
+backend/app/schemas/event.py
+backend/app/schemas/news.py
+backend/app/schemas/pagination.py
+backend/app/schemas/registration.py
+backend/app/schemas/user.py
+backend/app/services/event_provider.py
+backend/app/services/news_provider.py
+backend/app/utils/security.py
+backend/migrations/README
+backend/migrations/env.py
+backend/migrations/script.py.mako
+backend/migrations/versions/5b762ef85826_add_source_and_url_to_events.py
+backend/migrations/versions/fb56312805ee_add_source_column_to_news.py
+backend/pytest.ini
+backend/requirements.txt
+backend/tests/conftest.py
+backend/tests/test_events.py
+backend/tests/test_registrations.py
+backend/tests/test_users.py
+eventease
+frontend/.next/prerender-manifest.json
+frontend/.next/server/server-reference-manifest.json
+frontend/.next/trace

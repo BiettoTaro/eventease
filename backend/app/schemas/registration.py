@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 import datetime
 
 class RegistrationOut(BaseModel):
@@ -7,5 +7,4 @@ class RegistrationOut(BaseModel):
     event_id: int
     created_at: datetime.datetime
     
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

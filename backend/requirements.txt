@@ -17,4 +17,4 @@ apscheduler
 pytest
 pytest-cov
 alembic
-
+httpx

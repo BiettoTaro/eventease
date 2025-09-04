@@ -117,16 +117,34 @@ def delete_event(event_id: int, db: Session = Depends(get_db),
                  current_user: User = Depends(get_current_user)):
     if not getattr(current_user, "is_admin", False):
         raise HTTPException(status_code=403, detail="Not authorized to delete events")
+    
+    db_event = db.query(Event).filter(Event.id == event_id).first()
+    if not db_event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    db.delete(db_event)
+    db.commit()
+    return {"message": "Event deleted"}
+
+# Refresh from third party providers
+@router.post("/refresh")
+def refresh_events(db: Session = Depends(get_db),
+                   current_user: User = Depends(get_current_user)):
+    if not getattr(current_user, "is_admin", False):
+        raise HTTPException(status_code=403, detail="Not authorized to refresh events")
+
     try:
-        db_event = db.get(Event, event_id)
-        if not db_event:
-            raise HTTPException(status_code=404, detail="Event not found")
-        db.delete(db_event)
-        db.commit()
-        return {"message": "Event deleted"}
+        added_ticketmaster = fetch_ticketmaster_events()
+        added_university = fetch_university_events(
+            "https://www.cl.cam.ac.uk/seminars/rss.xml", source="Cambridge CS"
+            )
+        return {
+            "status": "ok",
+            "ticketmaster": added_ticketmaster,
+            "university": added_university
+        }
     except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to delete event: { str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to refresh events: { str(e)}")
 
 # Refresh from third party providers
 @router.post("/refresh")
@@ -158,7 +176,3 @@ def haversine(lat1, lon1, lat2, lon2):
     a = math.sin(delta_phi / 2)**2 + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2)**2
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
-
-    
-    
- 
