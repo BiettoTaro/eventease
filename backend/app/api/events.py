@@ -21,7 +21,7 @@ def format_events(events, limit, offset) -> Dict[str, Any]:
         "total": len(events),
         "limit": limit,
         "offset": offset,
-        "events": [
+        "items": [
             {**jsonable_encoder(e), "booking_url": e.url}
             for e in events[offset:offset + limit]
         ]
