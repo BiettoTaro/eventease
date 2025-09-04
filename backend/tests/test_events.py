@@ -717,7 +717,7 @@ class TestEvents:
         db.add_all(events)
         db.commit()
         
-        token = create_access_token({"sub": str(user.id)})
+        token = create_access_token({"sub": user.email})
         
         # Test first page (limit=4, offset=0)
         response = test_client.get(
@@ -836,7 +836,7 @@ class TestEvents:
         db.add_all([event1, event2, event3, event4])
         db.commit()
         
-        token = create_access_token({"sub": str(user.id)})
+        token = create_access_token({"sub": user.email})
         
         # Test pagination with radius filter (should include nearby events)
         response = test_client.get(
@@ -896,7 +896,7 @@ class TestEvents:
         db.add(event)
         db.commit()
         
-        token = create_access_token({"sub": str(user.id)})
+        token = create_access_token({"sub": user.email})
         
         response = test_client.get(
             "/events/?limit=10&offset=0",
