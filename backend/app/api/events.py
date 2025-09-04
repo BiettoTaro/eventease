@@ -98,10 +98,12 @@ def update_event(event_id: int, event: EventCreate, db: Session = Depends(get_db
                  current_user: User = Depends(get_current_user)):
     if not getattr(current_user, "is_admin", False):
         raise HTTPException(status_code=403, detail="Not authorized to update events")
+    
+    db_event = db.get(Event, event_id)
+    if not db_event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
     try:
-        db_event = db.get(Event, event_id)
-        if not db_event:
-            raise HTTPException(status_code=404, detail="Event not found")
         for field, value in event.model_dump().items():
             setattr(db_event, field, value)
         db.commit()
