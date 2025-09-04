@@ -6,6 +6,7 @@ type EventItem = {
     title: string;
     description: string;
     type: string;
+    image: string;
 }
 
 export default async function EventsPage() {

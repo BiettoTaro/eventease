@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends
-from app.db.database import get_db
+from app.db.database import get_db, engine, Base
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from app.db.database import engine
-from app.db.database import Base
 
-router = APIRouter()
+router = APIRouter(prefix="/health", tags=["Health"])
+
+@router.get("")
+def health_check():
+    return {"status": "ok"}
 
 @router.get("/ping-db")
 def ping_db(db: Session = Depends(get_db)):
@@ -17,9 +19,6 @@ def ping_db(db: Session = Depends(get_db)):
 
 @router.post("/reset-db")
 def reset_db(db: Session = Depends(get_db)):
-    # Drop all tables
     Base.metadata.drop_all(bind=engine)
-    # Recreate all tables
     Base.metadata.create_all(bind=engine)
     return {"status": "ok", "message": "Database reset"}
-    

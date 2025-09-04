@@ -1,5 +1,6 @@
 fastapi
 uvicorn
+httpx
 psycopg2-binary
 sqlalchemy
 python-dotenv
@@ -17,4 +18,6 @@ apscheduler
 pytest
 pytest-cov
 alembic
+python-multipart
+
 

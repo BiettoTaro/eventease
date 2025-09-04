@@ -8,7 +8,7 @@ from typing import List, Optional, Dict, Any
 from app.utils.security import get_current_user
 from app.models.user import User
 from datetime import datetime
-from app.services.event_provider import fetch_ticketmaster_events, fetch_university_events
+from app.services.event_provider import fetch_ticketmaster_events, fetch_searchapi_events
 from fastapi.encoders import jsonable_encoder
 import math
 
@@ -54,7 +54,7 @@ def list_events(
     total = query.count()
     events = query.offset(offset).limit(limit).all()
     return PaginatedResponse(
-        total=query.count(),
+        total=total,
         limit=limit,
         offset=offset,
         items=events
@@ -143,14 +143,13 @@ def refresh_events(db: Session = Depends(get_db),
         raise HTTPException(status_code=403, detail="Not authorized to refresh events")
 
     try:
+        added_searchapi = fetch_searchapi_events()
         added_ticketmaster = fetch_ticketmaster_events()
-        added_university = fetch_university_events(
-            "https://www.cl.cam.ac.uk/seminars/rss.xml", source="Cambridge CS"
-            )
         return {
             "status": "ok",
+            "searchapi": added_searchapi,
             "ticketmaster": added_ticketmaster,
-            "university": added_university
+
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to refresh events: { str(e)}")

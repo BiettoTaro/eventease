@@ -2,17 +2,30 @@ import Results from "../../components/Results";
 import { fetchNews } from "../../lib/api";
 
 type NewsItem = {
-    id: string;
-    title: string;
-    description: string;
-    type: string;
-}
+  id: string;
+  title: string;
+  description: string;
+  image?: string | null;
+  topic?: string;
+  url?: string;
+  source?: string;
+};
 
 export default async function NewsPage() {
   let news: NewsItem[] = [];
 
   try {
-    news = await fetchNews();
+    const rawNews = await fetchNews();
+    // Ensure type is always "news"
+    news = rawNews.map((item: NewsItem, index: number) => ({
+      id: item.id || String(index),
+      title: item.title,
+      description: item.description || "",
+      image: item.image || null,
+      url: item.url,
+      topic: item.topic,
+    }));
+    
   } catch (err) {
     console.error("Error fetching news:", err);
     return (
