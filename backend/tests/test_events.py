@@ -134,7 +134,8 @@ class TestEvents:
         )
         
         assert response.status_code == 200
-        events = response.json()
+        data = response.json()
+        events = data["items"]
         assert len(events) >= 1
         # Should return nearby events first
         assert any(e["title"] == "Near Event" for e in events)
@@ -183,7 +184,8 @@ class TestEvents:
         )
         
         assert response.status_code == 200
-        events = response.json()
+        data = response.json()
+        events = data["items"]
         assert len(events) >= 1
         # Should return London events
         assert any(e["city"] == "London" for e in events)
@@ -229,7 +231,8 @@ class TestEvents:
         )
         
         assert response.status_code == 200
-        events = response.json()
+        data = response.json()
+        events = data["items"]
         assert len(events) >= 1
         # Should return UK events
         assert any(e["country"] == "UK" for e in events)
@@ -272,7 +275,8 @@ class TestEvents:
         )
         
         assert response.status_code == 200
-        events = response.json()
+        data = response.json()
+        events = data["items"]
         assert len(events) >= 2
         # Should return events ordered by start_time desc (newest first)
         assert events[0]["title"] == "New Event"
@@ -533,7 +537,8 @@ class TestEvents:
         )
         
         assert response.status_code == 200
-        events = response.json()
+        data = response.json()
+        events = data["items"]
         # Should only return events within 50km
         assert all(e["title"] != "Cambridge Event" for e in events)
         
@@ -672,7 +677,8 @@ class TestEvents:
         )
         
         assert response.status_code == 200
-        events = response.json()
+        data = response.json()
+        events = data["items"]
         # Should prioritize events by location (coordinates first)
         assert len(events) >= 1
         # The exact location event should be prioritized
