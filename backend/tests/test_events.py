@@ -126,7 +126,7 @@ class TestEvents:
         db.commit()
         
         # Create access token
-        token = create_access_token({"sub": str(user.id)})
+        token = create_access_token({"sub": user.email})
         
         response = test_client.get(
             "/events/?radius=50",
@@ -175,7 +175,7 @@ class TestEvents:
         db.commit()
         
         # Create access token
-        token = create_access_token({"sub": str(user.id)})
+        token = create_access_token({"sub": user.email})
         
         response = test_client.get(
             "/events/",
@@ -221,7 +221,7 @@ class TestEvents:
         db.commit()
         
         # Create access token
-        token = create_access_token({"sub": str(user.id)})
+        token = create_access_token({"sub": user.email})
         
         response = test_client.get(
             "/events/",
@@ -264,7 +264,7 @@ class TestEvents:
         db.commit()
         
         # Create access token
-        token = create_access_token({"sub": str(user.id)})
+        token = create_access_token({"sub": user.email})
         
         response = test_client.get(
             "/events/",
@@ -524,7 +524,7 @@ class TestEvents:
         db.commit()
         
         # Create access token
-        token = create_access_token({"sub": str(user.id)})
+        token = create_access_token({"sub": user.email})
         
         # Test with radius 50km (should only return London event)
         response = test_client.get(
@@ -664,7 +664,7 @@ class TestEvents:
         db.commit()
         
         # Create access token
-        token = create_access_token({"sub": str(user.id)})
+        token = create_access_token({"sub": user.email})
         
         response = test_client.get(
             "/events/?radius=50",

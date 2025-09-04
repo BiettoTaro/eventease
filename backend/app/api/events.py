@@ -34,7 +34,7 @@ def create_event(event: EventCreate, db: Session = Depends(get_db),
                  current_user: User = Depends(get_current_user)):
     if not getattr(current_user, "is_admin", False):
         raise HTTPException(status_code=403, detail="Not authorized to create events")
-    db_event = Event(**event.dict())
+    db_event = Event(**event.model_dump())
     db.add(db_event)
     db.commit()
     db.refresh(db_event)
@@ -102,7 +102,7 @@ def update_event(event_id: int, event: EventCreate, db: Session = Depends(get_db
         db_event = db.get(Event, event_id)
         if not db_event:
             raise HTTPException(status_code=404, detail="Event not found")
-        for field, value in event.dict().items():
+        for field, value in event.model_dump().items():
             setattr(db_event, field, value)
         db.commit()
         db.refresh(db_event)
