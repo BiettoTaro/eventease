@@ -5,21 +5,8 @@ from typing import List
 
 
 class EventBase(BaseModel):
-<<<<<<< HEAD
-    title: str = Field(..., example="Hackathon 2025")
-    description: str = Field(..., example="A 48h coding challenge") 
-    address: Optional[str] = Field(None, example="Tech Park, Cambridge")
-    city: Optional[str] = Field(None, example="Cambridge")
-    country: Optional[str] = Field(None, example="UK")
-    latitude: Optional[float] = Field(None, example=52.2053)
-    longitude: Optional[float] = Field(None, example=0.1218)
-    source: Optional[str] = Field(None, example="Ticketmaster")
-    url: Optional[str] = Field(None, example="https://ticketmaster.com/event/123")
-    start_time: datetime.datetime = Field(..., example="2025-09-10T10:00:00Z")
-    end_time: datetime.datetime = Field(..., example="2025-09-10T18:00:00Z")
-=======
     title: str = Field(..., json_schema_extra={'example': "Hackathon 2025"})
-    description: str = Field(..., json_schema_extra={'example': "A 48h coding challenge"}) 
+    description: str = Field(..., json_schema_extra={'example': "A 48h coding challenge"})
     address: Optional[str] = Field(None, json_schema_extra={'example': "Tech Park, Cambridge"})
     city: Optional[str] = Field(None, json_schema_extra={'example': "Cambridge"})
     country: Optional[str] = Field(None, json_schema_extra={'example': "UK"})
@@ -30,7 +17,6 @@ class EventBase(BaseModel):
     url: Optional[str] = Field(None, json_schema_extra={'example': "https://ticketmaster.com/event/123"})
     start_time: datetime.datetime = Field(..., json_schema_extra={'example': "2025-09-10T10:00:00Z"})
     end_time: datetime.datetime = Field(..., json_schema_extra={'example': "2025-09-10T18:00:00Z"})
->>>>>>> implement-test-auth
 
 class EventCreate(EventBase):
     pass
@@ -38,10 +24,4 @@ class EventCreate(EventBase):
 class EventOut(EventBase):
     id: int
     
-<<<<<<< HEAD
-    class Config:
-        orm_mode = True
-=======
     model_config = ConfigDict(from_attributes=True)
->>>>>>> implement-test-auth
-
