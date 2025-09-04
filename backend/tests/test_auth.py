@@ -2,12 +2,6 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from datetime import timedelta
-import sys
-import os
-
-# Add the backend directory to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 from app.utils.security import get_password_hash, create_access_token, verify_password
 from app.models.user import User
 
