@@ -1,16 +1,17 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from app.db.database import get_db
 from app.schemas.event import EventCreate, EventOut
 from app.schemas.pagination import PaginatedResponse
 from app.models.event import Event
 from sqlalchemy.orm import Session
-from typing import List, Optional, Dict, Any
+from typing import Optional, Dict, Any
 from app.utils.security import get_current_user
 from app.models.user import User
-from datetime import datetime
 from app.services.event_provider import fetch_ticketmaster_events, fetch_searchapi_events
 from fastapi.encoders import jsonable_encoder
 import math
+from sqlalchemy import or_
+
 
 
 router = APIRouter()
@@ -45,12 +46,23 @@ def create_event(event: EventCreate, db: Session = Depends(get_db),
 @router.get("/", response_model=PaginatedResponse[EventOut])
 def list_events(
     db: Session = Depends(get_db),
+    q: Optional[str] = Query(None, description="Search in title or description, city or type"),
     # current_user: User = Depends(get_current_user),
     radius: Optional[int] = 50,
     limit: int = 10, 
     offset: int = 0
 ):
     query = db.query(Event)
+    if q:
+        like = f"%{q}%"
+        query = query.filter(
+            or_(
+                Event.title.ilike(like),
+                Event.description.ilike(like),
+                Event.city.ilike(like),
+                Event.type.ilike(like)
+            )
+        )
     total = query.count()
     events = query.offset(offset).limit(limit).all()
     return PaginatedResponse(

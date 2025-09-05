@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import Providers from "./Providers";
 import Navbar from "../components/Navbar";
 import PageContainer from "../components/PageContainer";
+import SearchBox from "../components/SearchBox";
 
 
 
@@ -37,6 +38,7 @@ export default function RootLayout({
         <Providers>
             <Header />
             <Navbar />
+            <SearchBox />
             <PageContainer>
               {children}
               </PageContainer>

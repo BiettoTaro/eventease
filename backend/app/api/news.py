@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from app.db.database import get_db
 from app.schemas.news import NewsCreate, NewsOut
 from app.schemas.pagination import PaginatedResponse
 from app.models.news import News
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from app.utils.security import get_current_user
 from app.services.news_provider import fetch_techcrunch_news, fetch_hackernews_news
 
@@ -33,17 +34,28 @@ def create_news(news: NewsCreate, db: Session = Depends(get_db),
 
 @router.get("/", response_model=PaginatedResponse[NewsOut])
 def list_news(
-    source: str = None,
-    topic: str = None,
-    db: Session = Depends(get_db),
+    q: str | None = Query(None, description="Search in title or description"),
+    source: str | None = None,
+    topic: str | None = None,
     limit: int = 10,
     offset: int = 0,
+    db: Session = Depends(get_db),
     ):
     query = db.query(News)
     if source:
         query = query.filter(News.source == source)
     if topic:
         query = query.filter(News.topic == topic)
+    if q:
+        like = f"%{q}%"
+        query = query.filter(
+            or_(
+                News.title.ilike(like),
+                News.summary.ilike(like),
+                News.topic.ilike(like),
+                News.source.ilike(like)
+            )
+        )
     return PaginatedResponse(
         total=query.count(),
         limit=limit,
