@@ -19,5 +19,5 @@ export default function PageContainer({ children }: { children: React.ReactNode 
     }
   }, [pathname, children]);
 
-  return <div className="min-h-screen">{displayed}</div>;
+  return <div className="min-h-screen max-w-6xl mx-auto">{displayed}</div>;
 }

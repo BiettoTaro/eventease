@@ -10,7 +10,7 @@ from app.models.user import User
 from app.services.event_provider import fetch_ticketmaster_events, fetch_searchapi_events
 from fastapi.encoders import jsonable_encoder
 import math
-from sqlalchemy import or_
+from sqlalchemy import or_ , case
 
 
 
@@ -63,13 +63,21 @@ def list_events(
                 Event.type.ilike(like)
             )
         )
+    
+    # Display latest first, prioritising SearchAPI events
+    priority = case(
+        (Event.source == "SearchApi.io", 0),
+        else_ = 1
+    )
+    query = query.order_by(priority, Event.start_time.desc())
+
     total = query.count()
-    events = query.offset(offset).limit(limit).all()
+
     return PaginatedResponse(
         total=total,
         limit=limit,
         offset=offset,
-        items=events
+        items=query.offset(offset).limit(limit).all()
     )
 
     # # Nearby events first (if user has coordinates)

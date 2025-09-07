@@ -26,6 +26,20 @@ services:
     networks:
       - eventease_net
 
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@eventease.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    networks:
+      - eventease_net
+
+
   frontend:
     build: ./frontend
     ports:

@@ -272,4 +272,29 @@ backend/migrations/versions/*.pyc
 # local docker volumes
 **/.container-volumes/
 
+# ---- Next.js build/cache ----
+.next/
+out/
+dist/
+*.pack.gz
+*.pack.gz.old
+trace/
+prerender-manifest.json
+app-build-manifest.json
+
+# ---- Frontend ----
+frontend/.next/
+frontend/out/
+frontend/node_modules/
+
+# ---- Docker volumes ----
+db_data/
+pgadmin_data/
+docker-data/
+
+# ---- Logs ----
+*.pid
+
+# ---- IDE ----
+.idea/
 

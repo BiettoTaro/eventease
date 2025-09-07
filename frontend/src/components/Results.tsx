@@ -27,7 +27,7 @@ export default function Results({ results }: { results: ResultItem[] }) {
   if (isNews) {
     // List layout for news
     return (
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {results.map((news) => (
           <NewsListItem key={news.id} news={news} />
         ))}

@@ -56,6 +56,10 @@ def list_news(
                 News.source.ilike(like)
             )
         )
+
+    # Display latest first
+    query = query.order_by(News.published_at.desc())
+    
     return PaginatedResponse(
         total=query.count(),
         limit=limit,

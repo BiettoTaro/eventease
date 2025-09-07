@@ -16,7 +16,7 @@ export default function NavbarItem({ title, address }: NavbarItemProps) {
     return (
       <Link
         href={address}
-        className={`hover:text-orange-500 font-semibold transition-colors 
+        className={`dark:hover:text-orange-500 hover:text-gray-600 font-semibold transition-colors 
             ${isActive ? "underline underline-offset-8 decoration-4 decoration-orange-500 rounded-lg" : ""}`}
       >
         {title}

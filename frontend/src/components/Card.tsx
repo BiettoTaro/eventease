@@ -13,7 +13,7 @@ type ResultItem = {
 
 export default function Card({ result }: { result: ResultItem }) {
   return (
-    <div className="group cursor-pointer p-2 border-b dark:border-orange-600 border-gray-500 shadow-sm hover:shadow-md transition-shadow rounded-lg">
+    <div className="group cursor-pointer p-2 border-b dark:border-orange-600 border-gray-500 shadow-sm hover:shadow-gray-500 hover:shadow-lg dark:shadow-lg dark:hover:shadow-orange-500 transition-shadow rounded-lg">
       <Link href={result.url || "#"} target="_blank" rel="noopener noreferrer">
         <Image
           src={result.image || "/placeholder.jpg"} // ✅ fallback image

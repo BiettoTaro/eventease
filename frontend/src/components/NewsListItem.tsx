@@ -15,7 +15,7 @@ type NewsListItemProps = {
 export default function NewsListItem({news}: {news: NewsListItemProps}) {
   return (
     <Link href={news.url || "#"} target="_blank" rel="noopener noreferrer"
-    className='flex items-start gap-4 p-3 border-b dark:border-gray-700 hover:bg-orange-50 
+    className='flex items-start gap-4 p-3 border-b border-orange-700 dark:border-gray-700 hover:bg-gray-400 
     dark:hover:bg-orange-900 transition'>
         <div className='flex-shrink-0'>
             <Image
