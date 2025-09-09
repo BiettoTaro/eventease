@@ -19,5 +19,5 @@ pytest
 pytest-cov
 alembic
 python-multipart
-
+httpx
 

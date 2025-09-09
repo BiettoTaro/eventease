@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 import datetime
 from typing import List
@@ -27,6 +27,4 @@ class EventCreate(EventBase):
 class EventOut(EventBase):
     id: int
     
-    class Config:
-        orm_mode = True
-
+    model_config = ConfigDict(from_attributes=True)
