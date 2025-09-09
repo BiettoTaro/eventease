@@ -10,8 +10,9 @@ services:
     env_file:
       - .env.dev
     depends_on:
-      - db
-    command: 
+      db:
+        condition: service_healthy   
+    command: >
       sh -c "alembic upgrade head &&
              python -m seeder.seed_admin &&
              uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
@@ -26,19 +27,18 @@ services:
     networks:
       - eventease_net
 
-  pgadmin:
-    image: dpage/pgadmin4
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@eventease.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-    ports:
-      - "5050:80"
-    depends_on:
-      - db
-    networks:
-      - eventease_net
-
+  # pgadmin:
+  #   image: dpage/pgadmin4
+  #   restart: always
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: admin@eventease.com
+  #     PGADMIN_DEFAULT_PASSWORD: admin
+  #   ports:
+  #     - "5050:80"
+  #   depends_on:
+  #     - db
+  #   networks:
+  #     - eventease_net
 
   frontend:
     build: ./frontend
@@ -55,6 +55,7 @@ services:
       - backend
     networks:
       - eventease_net
+
   db:
     image: postgres:15
     restart: always
@@ -68,6 +69,12 @@ services:
       - "5432:5432"
     networks:
       - eventease_net
+    healthcheck:   
+      test: ["CMD-SHELL", "pg_isready -U postgres -d eventease"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
   db_data:
 

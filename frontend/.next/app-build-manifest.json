@@ -16,20 +16,30 @@
       "static/chunks/main-app.js",
       "static/chunks/app/loading.js"
     ],
-    "/page": [
+    "/(auth)/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/page.js"
+      "static/chunks/app/(auth)/layout.js"
     ],
-    "/news/page": [
+    "/(auth)/login/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/news/page.js"
+      "static/chunks/app/(auth)/login/page.js"
     ],
-    "/events/page": [
+    "/(auth)/signup/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/events/page.js"
+      "static/chunks/app/(auth)/signup/page.js"
+    ],
+    "/(app)/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(app)/layout.js"
+    ],
+    "/(app)/home/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(app)/home/page.js"
     ]
   }
 }
