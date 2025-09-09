@@ -514,6 +514,7 @@ class TestEvents:
             end_time=datetime.now(timezone.utc) + timedelta(days=1, hours=8)
         )
         
+        
         # Event 2: Cambridge (~80km from London)
         event2 = Event(
             title="Cambridge Event",
@@ -523,6 +524,7 @@ class TestEvents:
             start_time=datetime.now(timezone.utc) + timedelta(days=2),
             end_time=datetime.now(timezone.utc) + timedelta(days=2, hours=8)
         )
+
         
         db.add_all([event1, event2])
         db.commit()

@@ -626,7 +626,7 @@ def test_registrations_pagination_response_structure(test_client: TestClient, db
     # If there are items, verify they have the expected structure
     if data["items"]:
         item = data["items"][0]
-        expected_item_fields = ["id", "user_id", "event_id", "registered_at"]
+        expected_item_fields = ["id", "user_id", "event_id", "created_at"]
         for field in expected_item_fields:
             assert field in item, f"Registration item should contain '{field}' field"
 
