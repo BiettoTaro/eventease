@@ -1,8 +1,8 @@
-"""add source column to news
+"""add map_image to events
 
-Revision ID: fb56312805ee
-Revises: 
-Create Date: 2025-08-29 10:55:32.297853
+Revision ID: 85dc5be29756
+Revises: 4bc1b1ee73fb
+Create Date: 2025-09-04 10:48:36.268029
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'fb56312805ee'
-down_revision: Union[str, Sequence[str], None] = None
+revision: str = '85dc5be29756'
+down_revision: Union[str, Sequence[str], None] = '4bc1b1ee73fb'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

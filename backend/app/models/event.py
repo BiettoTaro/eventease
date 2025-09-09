@@ -17,6 +17,9 @@ class Event(Base):
     longitude = Column(Float, nullable=True)
     source = Column(String, nullable=True)
     url = Column(String, nullable=True)
+    type = Column(String, nullable=True)
+    image = Column(String, nullable=True)
+    map_image = Column(String, nullable=True)
     start_time = Column(DateTime, nullable=False)
     end_time = Column(DateTime, nullable=True)
     
