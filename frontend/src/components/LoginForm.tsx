@@ -1,8 +1,9 @@
 "use client";
 
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { useRouter } from 'next/navigation';
+import React from "react";
+import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
+import { login as loginApi } from "../lib/api";
 
 interface LoginFormData {
   email: string;
@@ -19,23 +20,28 @@ export default function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      // TODO: Implement your login logic here
-      console.log('Login data:', data);
-      router.push('/home'); // Uncomment after successful login
+      const res = await loginApi(data.email, data.password);
+
+      // Save token in localStorage
+      localStorage.setItem("token", res.access_token);
+
+      // Redirect to home
+      router.push("/home");
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error("Login failed:", error);
     }
   };
 
   return (
     <div className="w-full max-w-md space-y-8">
       <div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-orange-400">
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-orange-500">
           Sign in to your account
         </h2>
       </div>
       <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
         <div className="rounded-md shadow-sm space-y-4">
+          {/* Email */}
           <div>
             <label htmlFor="email" className="sr-only">
               Email address
@@ -47,11 +53,11 @@ export default function LoginForm() {
               required
               className="label"
               placeholder="Email address"
-              {...register('email', {
-                required: 'Email is required',
+              {...register("email", {
+                required: "Email is required",
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Invalid email address',
+                  message: "Invalid email address",
                 },
               })}
             />
@@ -59,6 +65,8 @@ export default function LoginForm() {
               <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
             )}
           </div>
+
+          {/* Password */}
           <div>
             <label htmlFor="password" className="sr-only">
               Password
@@ -70,11 +78,11 @@ export default function LoginForm() {
               required
               className="label"
               placeholder="Password"
-              {...register('password', {
-                required: 'Password is required',
+              {...register("password", {
+                required: "Password is required",
                 minLength: {
                   value: 6,
-                  message: 'Password must be at least 6 characters',
+                  message: "Password must be at least 6 characters",
                 },
               })}
             />
@@ -84,36 +92,44 @@ export default function LoginForm() {
           </div>
         </div>
 
+        {/* Remember me + Register */}
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <input
               id="remember-me"
               name="remember-me"
               type="checkbox"
-              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+              className="h-4 w-4 text-orange-500 focus:ring-orange-400 border-gray-300 rounded"
             />
-            <label htmlFor="remember-me" className="ml-2 block text-sm text-orange-500">
+            <label
+              htmlFor="remember-me"
+              className="ml-2 block text-sm text-orange-500"
+            >
               Remember me
             </label>
           </div>
 
           <div className="text-sm">
-            <a href="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
+            <a
+              href="/signup"
+              className="font-medium text-indigo-600 hover:text-indigo-500"
+            >
               Register
             </a>
           </div>
         </div>
 
+        {/* Submit */}
         <div>
           <button
             type="submit"
             disabled={isSubmitting}
             className="group relative w-full flex justify-center py-2 px-4 border border-transparent
-             text-sm font-medium rounded-md text-gray-900 bg-orange-500
-              hover:bg-orange-600 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2
+             text-sm font-medium rounded-md text-white bg-orange-500
+              hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2
                focus:ring-orange-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? 'Signing in...' : 'Sign in'}
+            {isSubmitting ? "Signing in..." : "Sign in"}
           </button>
         </div>
       </form>

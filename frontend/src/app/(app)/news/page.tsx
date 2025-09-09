@@ -1,46 +1,48 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Results from "../../../components/Results";
 import { fetchNews } from "../../../lib/api";
-export const dynamic = "force-dynamic";
 import { NewsItem } from "../../../lib/types";
+import { useRouter, useSearchParams } from "next/navigation";
+
+export const dynamic = "force-dynamic";
 
 
-type NewsPageProps = {
-  searchParams: {
-    offset?: string;
-    limit?: string;
-  }
-}
+export default function NewsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-export default async function NewsPage({ searchParams }: NewsPageProps) {
-  const offset = parseInt(searchParams?.offset || "0", 10);
-  const limit = parseInt(searchParams?.limit || "10", 10);
+  const offset = parseInt(searchParams.get("offset") || "0", 10);
+  const limit = parseInt(searchParams.get("limit") || "10", 10);
 
-  let news: NewsItem[] = [];
-  let total = 0;
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
 
-  try {
-    const {items, total:newsTotal} = await fetchNews(undefined, offset, limit);
-    total = newsTotal;
-    // Ensure type is always "news"
-    news = items.map((item: NewsItem, index: number) => ({
-      id: item.id || String(index),
-      title: item.title,
-      description: item.description || "",
-      image: item.image || null,
-      url: item.url,
-      topic: item.topic,
-      source: item.source,
-    }));
-    
-  } catch (err) {
-    console.error("Error fetching news:", err);
-    return (
-      <div className="p-10 text-center text-red-500">
-        Could not load news right now.
-      </div>
-    );
-  }
+    const loadNews = async () => {
+      try {
+        const { items, total: newsTotal } = await fetchNews(undefined, offset, limit);
+        setNews(items);
+        setTotal(newsTotal);
+      } catch (err) {
+        console.error("Error fetching news:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadNews();
+  }, [offset, limit, router]);
+
+  if (loading) return <p className="p-10">Loading news...</p>;
 
   const hasPrev = offset > 0;
   const hasNext = offset + limit < total;
@@ -55,18 +57,20 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
             {hasPrev ? (
               <Link
                 href={`/news?offset=${Math.max(offset - limit, 0)}&limit=${limit}`}
-                className="px-4 py-2 bg-transparent hover:text-orange-500 dark:text-white rounded">
-                  Previous
-                </Link>
+                className="px-4 py-2 bg-transparent hover:text-orange-500 dark:text-white rounded"
+              >
+                Previous
+              </Link>
             ) : (
               <span />
             )}
 
-            {hasNext &&(
+            {hasNext && (
               <Link
                 href={`/news?offset=${offset + limit}&limit=${limit}`}
-                className="px-4 py-2 bg-transparent hover:text-orange-500 dark:text-white rounded">
-                  Next
+                className="px-4 py-2 bg-transparent hover:text-orange-500 dark:text-white rounded"
+              >
+                Next
               </Link>
             )}
           </div>
