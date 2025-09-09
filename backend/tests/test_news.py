@@ -156,8 +156,8 @@ class TestNews:
         
         response = test_client.post("/news/", json=news_data)
         
-        # FastAPI security middleware returns 403 for missing auth
-        assert response.status_code == 403
+        # FastAPI security middleware returns 401 for missing auth
+        assert response.status_code == 401
     
     def test_list_news_success(self, test_client: TestClient, db: Session):
         """

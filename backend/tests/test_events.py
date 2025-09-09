@@ -33,7 +33,6 @@ class TestEvents:
             "address": "123 Test St",
             "city": "Test City",
             "country": "Test Country",
-            "capacity": 100,
             "latitude": 51.5074,
             "longitude": -0.1278,
             "start_time": "2025-01-15T10:00:00Z",
@@ -50,7 +49,6 @@ class TestEvents:
         data = response.json()
         assert data["title"] == event_data["title"]
         assert data["description"] == event_data["description"]
-        assert data["capacity"] == event_data["capacity"]
         assert "id" in data
     
     def test_create_event_unauthorized(self, test_client: TestClient, db: Session):
@@ -574,7 +572,6 @@ class TestEvents:
         event_with_capacity = {
             "title": "Limited Capacity Event",
             "description": "Event with capacity limit",
-            "capacity": 50,
             "start_time": "2025-01-15T10:00:00Z",
             "end_time": "2025-01-15T18:00:00Z"
         }
@@ -586,8 +583,6 @@ class TestEvents:
         )
         
         assert response.status_code == 200
-        data = response.json()
-        assert data["capacity"] == 50
         
         # Test event without capacity (should be allowed)
         event_without_capacity = {
@@ -604,8 +599,6 @@ class TestEvents:
         )
         
         assert response.status_code == 200
-        data = response.json()
-        assert data["capacity"] is None
     
     def test_event_filtering_by_location_priority(self, test_client: TestClient, db: Session):
         """Test event filtering priority: coordinates > city > country > latest"""

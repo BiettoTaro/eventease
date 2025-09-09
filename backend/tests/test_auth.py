@@ -24,11 +24,11 @@ class TestAuthLogin:
         
         # Test login
         login_data = {
-            "email": "test@example.com",
+            "username": "test@example.com",
             "password": "testpassword123"
         }
         
-        response = test_client.post("/auth/login", json=login_data)
+        response = test_client.post("/auth/login", data=login_data)
         
         assert response.status_code == 200
         data = response.json()
@@ -39,11 +39,11 @@ class TestAuthLogin:
     def test_login_invalid_email(self, test_client: TestClient, db: Session):
         """Test login failure with non-existent email"""
         login_data = {
-            "email": "nonexistent@example.com",
+            "username": "nonexistent@example.com",
             "password": "anypassword"
         }
         
-        response = test_client.post("/auth/login", json=login_data)
+        response = test_client.post("/auth/login", data=login_data)
         
         assert response.status_code == 401
         data = response.json()
@@ -63,11 +63,11 @@ class TestAuthLogin:
         
         # Test login with wrong password
         login_data = {
-            "email": "test@example.com",
+            "username": "test@example.com",
             "password": "wrongpassword"
         }
         
-        response = test_client.post("/auth/login", json=login_data)
+        response = test_client.post("/auth/login", data=login_data)
         
         assert response.status_code == 401
         data = response.json()
@@ -76,15 +76,15 @@ class TestAuthLogin:
     def test_login_missing_fields(self, test_client: TestClient):
         """Test login with missing required fields"""
         # Test missing email
-        response = test_client.post("/auth/login", json={"password": "testpassword"})
+        response = test_client.post("/auth/login", data={"password": "testpassword"})
         assert response.status_code == 422
         
         # Test missing password
-        response = test_client.post("/auth/login", json={"email": "test@example.com"})
+        response = test_client.post("/auth/login", data={"username": "test@example.com"})
         assert response.status_code == 422
         
         # Test empty request
-        response = test_client.post("/auth/login", json={})
+        response = test_client.post("/auth/login", data={})
         assert response.status_code == 422
 
 
@@ -106,11 +106,11 @@ class TestJWTTokenGeneration:
         
         # Login to get token
         login_data = {
-            "email": "jwt@example.com",
+            "username": "jwt@example.com",
             "password": "jwtpassword123"
         }
         
-        response = test_client.post("/auth/login", json=login_data)
+        response = test_client.post("/auth/login", data=login_data)
         assert response.status_code == 200
         
         token_data = response.json()
@@ -217,11 +217,11 @@ class TestAuthEdgeCases:
     def test_login_with_empty_strings(self, test_client: TestClient, db: Session):
         """Test login with empty string values"""
         login_data = {
-            "email": "",
+            "username": "",
             "password": ""
         }
         
-        response = test_client.post("/auth/login", json=login_data)
+        response = test_client.post("/auth/login", data=login_data)
         assert response.status_code == 401
     
     def test_login_with_special_characters(self, test_client: TestClient, db: Session):
@@ -241,11 +241,11 @@ class TestAuthEdgeCases:
         
         # Test login with special characters
         login_data = {
-            "email": special_email,
+            "username": special_email,
             "password": special_password
         }
         
-        response = test_client.post("/auth/login", json=login_data)
+        response = test_client.post("/auth/login", data=login_data)
         assert response.status_code == 200
         data = response.json()
         assert "access_token" in data
@@ -264,9 +264,9 @@ class TestAuthEdgeCases:
         
         # Test with uppercase email (should fail)
         login_data = {
-            "email": "CASE@EXAMPLE.COM",
+            "username": "CASE@EXAMPLE.COM",
             "password": "casepassword"
         }
         
-        response = test_client.post("/auth/login", json=login_data)
+        response = test_client.post("/auth/login", data=login_data)
         assert response.status_code == 401
