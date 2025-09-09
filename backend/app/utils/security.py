@@ -5,10 +5,10 @@ from app.models.user import User
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Depends
 from app.db.database import get_db
-from fastapi.security import HTTPBearer
+from fastapi.security import OAuth2PasswordBearer
 import os
 
-oauth2_scheme = HTTPBearer()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 # Read from env
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret")

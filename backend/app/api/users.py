@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Body, HTTPException
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.schemas.user import UserCreate, UserOut
 from app.schemas.pagination import PaginatedResponse    
 from app.models.user import User
 from passlib.context import CryptContext
+from app.utils.security import get_current_user
 
 router = APIRouter()
 
@@ -53,6 +54,21 @@ def list_users(db: Session = Depends(get_db),
         offset=offset,
         items=query.offset(offset).limit(limit).all()
     )
+
+# Update user location
+@router.put("/me/location", response_model=UserOut)
+def update_location(
+    location: dict = Body(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    current_user.latitude = location.get("latitude")
+    current_user.longitude = location.get("longitude")
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
 
 # Get a user by id
 @router.get("/{user_id}", response_model=UserOut)

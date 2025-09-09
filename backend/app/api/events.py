@@ -1,16 +1,17 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from app.db.database import get_db
 from app.schemas.event import EventCreate, EventOut
 from app.schemas.pagination import PaginatedResponse
 from app.models.event import Event
 from sqlalchemy.orm import Session
-from typing import List, Optional, Dict, Any
+from typing import Optional, Dict, Any
 from app.utils.security import get_current_user
 from app.models.user import User
-from datetime import datetime
-from app.services.event_provider import fetch_ticketmaster_events, fetch_university_events
+from app.services.event_provider import fetch_ticketmaster_events, fetch_searchapi_events
 from fastapi.encoders import jsonable_encoder
 import math
+from sqlalchemy import or_ , case
+
 
 
 router = APIRouter()
@@ -45,15 +46,27 @@ def create_event(event: EventCreate, db: Session = Depends(get_db),
 @router.get("/", response_model=PaginatedResponse[EventOut])
 def list_events(
     db: Session = Depends(get_db),
+    q: Optional[str] = Query(None, description="Search in title or description, city or type"),
     current_user: User = Depends(get_current_user),
     radius: Optional[int] = 50,
     limit: int = 10, 
     offset: int = 0
 ):
     query = db.query(Event)
-    total = 0
 
-    # Nearby events first (if user has coordinates)
+    # Search filter
+    if q:
+        like = f"%{q}%"
+        query = query.filter(
+            or_(
+                Event.title.ilike(like),
+                Event.description.ilike(like),
+                Event.city.ilike(like),
+                Event.type.ilike(like)
+            )
+        )
+    
+    # Nearby events first if user has coords
     if current_user.latitude and current_user.longitude:
         events = query.all()
         nearby = [
@@ -61,27 +74,51 @@ def list_events(
             haversine(current_user.latitude, current_user.longitude, e.latitude, e.longitude) <= radius
         ]
         total = len(nearby)
-        if nearby:
-            return format_events(nearby, limit, offset)
+        return PaginatedResponse(
+            total=total,
+            limit=limit,
+            offset=offset,
+            items=nearby[offset:offset+limit]
+        )
 
     # Fallback to same city
     if current_user.city:
         city_events = query.filter(Event.city == current_user.city).all()
         total = len(city_events)
-        if city_events:
-            return format_events(city_events, limit, offset)
+        return PaginatedResponse(
+            total=total,
+            limit=limit,
+            offset=offset,
+            items=city_events[offset:offset+limit]
+        )
 
     # Fallback to same country
     if current_user.country:
         country_events = query.filter(Event.country == current_user.country).all()
         total = len(country_events)
-        if country_events:
-            return format_events(country_events, limit, offset)
+        return PaginatedResponse(
+            total=total,
+            limit=limit,
+            offset=offset,
+            items=country_events[offset:offset+limit]
+        )
 
-    # Final fallback latest events
-    latest = query.order_by(Event.start_time.desc()).all()
-    total = len(latest)
-    return format_events(latest, limit, offset)
+    # Default, display latest first, prioritising SearchAPI events
+    priority = case(
+        (Event.source == "SearchApi.io", 0),
+        else_ = 1
+    )
+    query = query.order_by(priority, Event.start_time.desc())
+
+    total = query.count()
+
+    return PaginatedResponse(
+        total=total,
+        limit=limit,
+        offset=offset,
+        items=query.offset(offset).limit(limit).all()
+    )
+
 
 
 # Get event by ID
@@ -156,14 +193,13 @@ def refresh_events(db: Session = Depends(get_db),
         raise HTTPException(status_code=403, detail="Not authorized to refresh events")
 
     try:
+        added_searchapi = fetch_searchapi_events()
         added_ticketmaster = fetch_ticketmaster_events()
-        added_university = fetch_university_events(
-            "https://www.cl.cam.ac.uk/seminars/rss.xml", source="Cambridge CS"
-            )
         return {
             "status": "ok",
+            "searchapi": added_searchapi,
             "ticketmaster": added_ticketmaster,
-            "university": added_university
+
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to refresh events: { str(e)}")
