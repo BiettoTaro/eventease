@@ -12,6 +12,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "s1.ticketm.net", // Ticketmaster
       },
+      {
+        protocol: "https",
+        hostname: "www.google.com",   // Map images
+      },
+
     ],
   },
   

@@ -10,7 +10,7 @@ from app.models.user import User
 from app.services.event_provider import fetch_ticketmaster_events, fetch_searchapi_events
 from fastapi.encoders import jsonable_encoder
 import math
-from sqlalchemy import or_ , case
+from sqlalchemy import or_ , case, func
 
 
 
@@ -46,15 +46,15 @@ def create_event(event: EventCreate, db: Session = Depends(get_db),
 @router.get("/", response_model=PaginatedResponse[EventOut])
 def list_events(
     db: Session = Depends(get_db),
-    q: Optional[str] = Query(None, description="Search in title or description, city or type"),
+    q: Optional[str] = Query(None),
     current_user: User = Depends(get_current_user),
     radius: Optional[int] = 50,
-    limit: int = 10, 
+    limit: int = 10,
     offset: int = 0
 ):
     query = db.query(Event)
 
-    # Search filter
+    # Apply search filters
     if q:
         like = f"%{q}%"
         query = query.filter(
@@ -65,59 +65,29 @@ def list_events(
                 Event.type.ilike(like)
             )
         )
-    
-    # Nearby events first if user has coords
-    if current_user.latitude and current_user.longitude:
-        events = query.all()
-        nearby = [
-            e for e in events if e.latitude and e.longitude and
-            haversine(current_user.latitude, current_user.longitude, e.latitude, e.longitude) <= radius
-        ]
-        total = len(nearby)
-        return PaginatedResponse(
-            total=total,
-            limit=limit,
-            offset=offset,
-            items=nearby[offset:offset+limit]
-        )
 
-    # Fallback to same city
-    if current_user.city:
-        city_events = query.filter(Event.city == current_user.city).all()
-        total = len(city_events)
-        return PaginatedResponse(
-            total=total,
-            limit=limit,
-            offset=offset,
-            items=city_events[offset:offset+limit]
-        )
+    all_events = query.all()
 
-    # Fallback to same country
-    if current_user.country:
-        country_events = query.filter(Event.country == current_user.country).all()
-        total = len(country_events)
-        return PaginatedResponse(
-            total=total,
-            limit=limit,
-            offset=offset,
-            items=country_events[offset:offset+limit]
-        )
+    # Split sources
+    searchapi_events = [e for e in all_events if e.source and e.source.lower() == "searchapi.io"]
+    other_events = [e for e in all_events if not e.source or e.source.lower() != "searchapi.io"]
 
-    # Default, display latest first, prioritising SearchAPI events
-    priority = case(
-        (Event.source == "SearchApi.io", 0),
-        else_ = 1
-    )
-    query = query.order_by(priority, Event.start_time.desc())
+    # Sort each group by start_time descending
+    searchapi_events.sort(key=lambda e: e.start_time or datetime.min, reverse=True)
+    other_events.sort(key=lambda e: e.start_time or datetime.min, reverse=True)
 
-    total = query.count()
+    # Combine with SearchApi.io always first
+    combined = searchapi_events + other_events
+
+    total = len(combined)
 
     return PaginatedResponse(
         total=total,
         limit=limit,
         offset=offset,
-        items=query.offset(offset).limit(limit).all()
+        items=combined[offset:offset+limit]
     )
+
 
 
 
@@ -165,25 +135,6 @@ def delete_event(event_id: int, db: Session = Depends(get_db),
     db.commit()
     return {"message": "Event deleted"}
 
-# Refresh from third party providers
-@router.post("/refresh")
-def refresh_events(db: Session = Depends(get_db),
-                   current_user: User = Depends(get_current_user)):
-    if not getattr(current_user, "is_admin", False):
-        raise HTTPException(status_code=403, detail="Not authorized to refresh events")
-
-    try:
-        added_ticketmaster = fetch_ticketmaster_events()
-        added_university = fetch_university_events(
-            "https://www.cl.cam.ac.uk/seminars/rss.xml", source="Cambridge CS"
-            )
-        return {
-            "status": "ok",
-            "ticketmaster": added_ticketmaster,
-            "university": added_university
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to refresh events: { str(e)}")
 
 # Refresh from third party providers
 @router.post("/refresh")

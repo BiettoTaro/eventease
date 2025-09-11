@@ -8,15 +8,17 @@ type ResultItem = {
   description: string;
   url?: string;
   image?: string | null;
+  map_image?: string | null;
   type?: string;
 };
 
 export default function Card({ result }: { result: ResultItem }) {
+  const imgSrc = result.image || result.map_image || "/placeholder.jpg";
   return (
     <div className="group cursor-pointer p-2 border-b dark:border-orange-600 border-gray-500 shadow-sm hover:shadow-gray-500 hover:shadow-lg dark:shadow-lg dark:hover:shadow-orange-500 transition-shadow rounded-lg">
       <Link href={result.url || "#"} target="_blank" rel="noopener noreferrer">
         <Image
-          src={result.image || "/placeholder.jpg"} // ✅ fallback image
+          src={imgSrc} 
           alt={result.title}
           width={500}
           height={300}

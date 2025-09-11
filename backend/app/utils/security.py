@@ -41,14 +41,15 @@ def get_current_user(token = Depends(oauth2_scheme), db: Session = Depends(get_d
         # Extract token from HTTPAuthorizationCredentials object
         token_str = token.credentials if hasattr(token, 'credentials') else str(token)
         payload = jwt.decode(token_str, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
+        sub = payload.get("sub")
+        if sub is None:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
 
-    user = db.query(User).filter(User.email == email).first()
+    user = db.query(User).filter(User.id == int(sub)).first()
     if user is None:
         raise credentials_exception
     return user
+
     

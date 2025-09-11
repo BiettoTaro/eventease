@@ -7,6 +7,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from app.utils.security import get_current_user
 from app.services.news_provider import fetch_techcrunch_news, fetch_hackernews_news
+from app.models.user import User
+
+
 
 router = APIRouter()
 
@@ -41,6 +44,7 @@ def list_news(
     limit: int = 10,
     offset: int = 0,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
     ):
     query = db.query(News)
     if source:
