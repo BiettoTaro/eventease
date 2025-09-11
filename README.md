@@ -1,38 +1,59 @@
-EventEase 🎉
+EventEase 
 
-EventEase is a full-stack web application for discovering university and tech events, alongside curated news.
-It uses FastAPI (Python) for the backend, PostgreSQL for persistence, and Next.js + TailwindCSS for the frontend.
-Everything runs inside Docker for consistency across environments.
+EventEase is a full-stack web application for discovering tech events and tech news.
 
-📦 Project Structure
+It is built with:
+
+⚡ FastAPI (Python) → backend REST API
+
+🐘 PostgreSQL → database
+
+⚛️ Next.js + TailwindCSS → frontend UI
+
+🐳 Docker → containerized environment
+
+📂 Project Structure
 eventease/
-│── backend/        # FastAPI app, models, routers, migrations
-│   ├── app/
-│   │   ├── api/            # Auth, Users, Events, News, etc.
-│   │   ├── models/         # SQLAlchemy models
-│   │   ├── schemas/        # Pydantic schemas
-│   │   ├── services/       # External APIs (news, events)
-│   │   └── db/             # Database setup
-│   └── migrations/         # Alembic migrations
+├── backend/                 # FastAPI backend
+│   ├── app/                 # Application code
+│   │   ├── api/             # Routers (auth, users, events, news, etc.)
+│   │   ├── db/              # Database setup
+│   │   ├── models/          # SQLAlchemy models
+│   │   ├── schemas/         # Pydantic schemas
+│   │   ├── services/        # External API integrations
+│   │   └── utils/           # Helpers (security, pagination, etc.)
+│   ├── migrations/          # Alembic migrations
+│   ├── seeder/              # Seeder scripts (admin user, etc.)
+│   ├── tests/               # Pytest unit tests
+│   ├── Dockerfile
+│   ├── entrypoint.sh
+│   ├── init_db.py
+│   ├── requirements.txt
+│   └── pytest.ini
 │
-│── frontend/       # Next.js 14 app with Tailwind v4
-│   ├── src/app/    # App Router pages (home, about)
-│   ├── src/components/     # Reusable components
-│   └── src/lib/    # API helpers (fetchEvents, fetchNews)
+├── frontend/                # Next.js frontend
+│   ├── public/              # Static assets (logos, placeholders, icons)
+│   ├── src/
+│   │   ├── app/             # App Router pages
+│   │   ├── components/      # Reusable UI components
+│   │   ├── context/         # React context providers
+│   │   └── lib/             # API helpers (fetchEvents, fetchNews)
+│   ├── Dockerfile
+│   ├── package.json
+│   └── tsconfig.json
 │
-│── docker-compose.yml
-│── README.md
+├── docker-compose.yml       # Multi-service setup
+├── LICENSE
+└── README.md
 
 🚀 Getting Started
-1. Clone repository
-git clone <your-private-repo-url>
+1️⃣ Clone the repository
+git clone <your-repo-url>
 cd eventease
 
+2️⃣ Environment Variables
 
-
-2. Environment Variables
-
-Create a file .env.dev in the root of the project with:
+Create .env.dev in the project root:
 
 # Database
 POSTGRES_USER=postgres
@@ -41,55 +62,60 @@ POSTGRES_DB=eventease
 DATABASE_URL=postgresql://postgres:postgres@db:5432/eventease
 
 # JWT secrets (for auth)
-SECRET_KEY=supersecret
+SECRET_KEY=supersecret       # 🔒 change in production!
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 
-Create a file .env.local in the frontend directory with:
+# External API keys
+SEARCHAPI_KEY=your_api_key_here   # 🔑 required for SearchApi.io
+TICKETMASTER_KEY=your_api_key_here
+
+
+Create .env.local in frontend/:
 
 NEXT_PUBLIC_BACKEND_URL=http://backend:8000
 
-3. Start Services with Docker
+
+👉 Replace API keys with your own. Never commit .env.* files to GitHub.
+
+3️⃣ Start services with Docker
 docker compose up --build
 
 
-This starts:
+Services:
 
-backend → FastAPI on http://localhost:8000
- (Swagger at /docs)
+Backend (FastAPI) → http://localhost:8000
 
-frontend → Next.js on http://localhost:3000
+Swagger docs at /docs
 
-db → PostgreSQL 15 on port 5432
+Frontend (Next.js) → http://localhost:3000
+
+PostgreSQL → port 5432
 
 🗄 Database Setup
 
-We use Alembic for migrations + a helper script to create initial tables.
+Apply migrations + initialize schema:
 
-Recreate schema (⚠️ will drop old data):
-
-docker compose down -v
-docker compose up -d --build
 docker compose exec backend alembic upgrade head
 docker compose exec backend python -m init_db
 
-🔑 Admin Seeder
 
-To create an admin user:
+Create an admin user:
 
 docker compose exec backend python -m seeder.seed_admin
 
 🌐 Frontend
 
-Built with Next.js 14 + React 18
+Built with Next.js 14 and React 18
 
-Styled with Tailwind v4
+Styled with TailwindCSS v4
 
 Dark mode toggle via next-themes
 
-API helpers normalize responses (fetchEvents, fetchNews) so components can directly use .map
+API helpers (fetchEvents, fetchNews) normalize backend responses
 
-Example usage
+Example usage:
+
 "use client"
 import { useEffect, useState } from "react"
 import { fetchNews } from "@/lib/api"
@@ -111,30 +137,45 @@ export default function Home() {
 }
 
 🔗 API Endpoints
+Auth
 
-Auth → POST /auth/login
+POST /auth/login
 
-Users → GET /users/
+Users
+
+GET /users/
 
 Events
 
-GET /events/ (public, paginated)
+GET /events/ → paginated
 
-POST /events/ (admin only)
+POST /events/ → admin only
 
 News
 
-GET /news/ (public, paginated)
+GET /news/ → paginated
 
-POST /news/ (admin only)
+POST /news/ → admin only
 
 ⚠️ Common Issues & Fixes
 
-relation "events" does not exist → Run migrations + init_db.
+relation "events" does not exist
+→ Run migrations + init_db.
 
-Failed to fetch in frontend → Make sure NEXT_PUBLIC_BACKEND_URL=http://backend:8000 in docker-compose.
+Frontend “Failed to fetch”
+→ Ensure .env.local has:
 
-Dark mode not toggling → Ensure Providers wraps <body> with ThemeProvider attribute="class".
+NEXT_PUBLIC_BACKEND_URL=http://backend:8000
 
-500 on GET endpoints → Check backend logs with
-docker compose logs backend -f.
+
+Dark mode not toggling
+→ Wrap <body> with ThemeProvider from next-themes.
+
+500 errors on GET endpoints
+→ Inspect logs:
+
+docker compose logs backend -f
+
+📜 License
+
+This project is licensed under the MIT License
