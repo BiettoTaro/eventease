@@ -4,11 +4,33 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 .label {
-  @apply appearance-none rounded-none relative block w-full px-3 py-2 border
+  @apply appearance-none bg-white rounded-none relative block w-full px-3 py-2 border
                border-orange-300 placeholder-gray-500 text-orange-500 rounded-t-md
                 focus:outline-none focus:ring-orange-500 focus:border-orange-500
                  focus:z-10 sm:text-sm;
 }
+
+input:-webkit-autofill {
+  box-shadow: 0 0 0px 1000px white inset !important;
+  -webkit-text-fill-color: #ed8936 !important; /* Tailwind gray-800 */
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.dark input:-webkit-autofill {
+  box-shadow: 0 0 0px 1000px white inset !important; /* dark bg */
+  -webkit-text-fill-color: #ed8936 !important; /* Tailwind gray-50 */
+}
+
+::selection {
+  background-color: #fb923c; /* Tailwind orange-400 */
+  color: white; /* make text readable */
+}
+
+.dark ::selection {
+  background-color: #f97316; /* Tailwind orange-500 */
+  color: white;
+}
+
 
 /* :root {
   --background: #ffffff;

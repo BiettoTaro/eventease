@@ -94,12 +94,12 @@ export default function LoginForm() {
 
         {/* Remember me + Register */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center">
+          {/* <div className="flex items-center">
             <input
               id="remember-me"
               name="remember-me"
               type="checkbox"
-              className="h-4 w-4 text-orange-500 focus:ring-orange-400 border-gray-300 rounded"
+              className="h-4 w-4 focus:ring-orange-400 border-gray-300 rounded"
             />
             <label
               htmlFor="remember-me"
@@ -107,9 +107,12 @@ export default function LoginForm() {
             >
               Remember me
             </label>
-          </div>
+          </div> */}
 
-          <div className="text-sm">
+          <div className="flex items-center gap-2 text-sm">
+            <p
+            className="text-orange-500"
+            >Don&apos;t have an account?</p>
             <a
               href="/signup"
               className="font-medium text-indigo-600 hover:text-indigo-500"
