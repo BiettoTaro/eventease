@@ -172,7 +172,7 @@ export default function SignupForm() {
         </div>
 
         <div className="text-sm text-center">
-          <span className="text-gray-600">Already have an account? </span>
+          <span className="text-orange-500">Already have an account? </span>
           <a 
             href="/login" 
             className="font-medium text-indigo-600 hover:text-indigo-500"
