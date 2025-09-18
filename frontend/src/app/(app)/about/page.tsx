@@ -8,19 +8,32 @@ export default function About() {
            Rinaldis and Andrei Murug – developing EventEase, an academic project aimed at tech-oriented
             university students who want to stay updated and connected.
         </p>
-        <p>Our original idea was to combine two worlds: technology news and live events.
-           At first, we explored different APIs, such as Eventbrite, to source event-related content.
-            However, as Eventbrite no longer provides event data through its API, we had to adapt.
-             For the events, we turned to the Ticketmaster API, which offers a reliable stream of concerts,
-              sports, and cultural activities in different locations. For the news, we integrated HackerNews
-               and TechCrunch APIs, focusing entirely on technology – the core interest of our target audience.
+        <p> From the beginning, our vision for EventEase was to create a platform dedicated to 
+          technology – combining <strong>tech news</strong> with <strong>tech-related events </strong>  
+           in one place. While exploring different providers, we found that many APIs, such as
+           Eventbrite, no longer offered free access to event data. To stay aligned with our original 
+           idea, we adopted <strong>SearchApi.io (Google Events)</strong>, which allowed us to
+            prioritise <em>technology-focused events and articles</em> that truly matched the needs
+             of our student audience. 
         </p>
-        <p>The result is a platform that merges tech news and event discovery in one place,
-           creating a unique experience for students passionate about technology and social engagement.
-            Built with a modern stack – Next.js + TailwindCSS (frontend), FastAPI (Python) (backend),
-            PostgreSQL (database), and Docker (containerisation).
-            EventEase showcases how teamwork and creativity can turn an academic project into a meaningful product.
+        <p> To ensure the platform remains engaging even when local tech events are limited,
+           we added the <strong>Ticketmaster API</strong> as a fallback source. These results
+          (concerts, sports, theatre) are always shown last, keeping the focus on technology
+          while providing extra variety when needed.
         </p>
+        <p> For news, we also use <strong>SearchApi.io</strong> to pull in curated technology stories
+         from trusted sources, creating a single hub for staying up to date with both innovations
+          and opportunities to engage in real-world activities. 
+        </p>
+        <p> Built with a modern stack – <strong>Next.js + TailwindCSS</strong> (frontend), 
+        <strong>FastAPI (Python)</strong> (backend), <strong>PostgreSQL</strong> (database), and
+         <strong>Docker</strong> (for consistency across environments) – EventEase stays true to 
+         its mission: <em>a tech-first discovery platform that blends knowledge with community</em>.
+        </p>
+        <p> We are currently working on adding more features to EventEase, such as user profiles,
+         event planning tools, and a community forum. We are also working on adding more APIs to
+          the platform to provide a more diverse range of events and news. </p>
+                
 
     </div>
   )
